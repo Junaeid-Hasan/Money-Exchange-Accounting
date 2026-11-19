@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Customers - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_customers') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Customer Management</h3>
-    <p class="text-muted small mb-0">Maintain individual client profiles, credit accounts, and bilateral transaction histories</p>
+    <h3 class="fw-bold mb-1">{{ _('customer_management') }}</h3>
+    <p class="text-muted small mb-0">{{ _('customer_mgmt_subtext') }}</p>
   </div>
   <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-    <i class="bi bi-person-plus-fill me-1"></i> Register New Customer
+    <i class="bi bi-person-plus-fill me-1"></i> {{ _('register_customer') }}
   </button>
 </div>
 
@@ -20,13 +20,13 @@
       <div class="col-md-5">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-          <input type="text" name="search" value="{{ search_query or '' }}" class="form-control" placeholder="Search by name, phone, code or NID...">
+          <input type="text" name="search" value="{{ search_query or '' }}" class="form-control" placeholder="{{ _('search_customers') }}">
         </div>
       </div>
       <div class="col-md-3">
-        <button type="submit" class="btn btn-sm btn-secondary"><i class="bi bi-filter me-1"></i> Filter</button>
+        <button type="submit" class="btn btn-sm btn-secondary"><i class="bi bi-filter me-1"></i> {{ _('filter') }}</button>
         {% if search_query %}
-        <a href="/customers" class="btn btn-sm btn-outline-secondary">Clear</a>
+        <a href="/customers" class="btn btn-sm btn-outline-secondary">{{ _('clear') }}</a>
         {% endif %}
       </div>
     </form>
@@ -36,20 +36,20 @@
 <!-- Customers Table -->
 <div class="app-card">
   <div class="app-card-header">
-    <h5 class="app-card-title">Registered Customers ({{ total_count }})</h5>
+    <h5 class="app-card-title">{{ _('customer_list') }} ({{ total_count }})</h5>
   </div>
   <div class="table-responsive">
     <table class="table app-table">
       <thead>
         <tr>
-          <th>Customer ID</th>
-          <th>Full Name</th>
-          <th>Phone Number</th>
-          <th>National ID / Ref</th>
-          <th>Receivables (Owed to Us)</th>
-          <th>Payables (We Owe)</th>
-          <th>Net Balance</th>
-          <th>Action</th>
+          <th>{{ _('customer_code') }}</th>
+          <th>{{ _('customer_name') }}</th>
+          <th>{{ _('phone_number') }}</th>
+          <th>{{ _('nid_passport') }}</th>
+          <th>{{ _('net_due_from_customer') }}</th>
+          <th>{{ _('net_payable_to_customer') }}</th>
+          <th>{{ _('current_balance') }}</th>
+          <th>{{ _('action') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -71,14 +71,14 @@
             ৳{{ "{:,.2f}".format(c.total_receivable_bdt - c.total_payable_bdt) }}
           </td>
           <td>
-            <a href="/customers/{{ c.id }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="View Profile & Ledger">
-              <i class="bi bi-person-lines-fill me-1"></i> View
+            <a href="/customers/{{ c.id }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="{{ _('view') }}">
+              <i class="bi bi-person-lines-fill me-1"></i> {{ _('view') }}
             </a>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="8" class="text-center text-muted py-4">No customers found. Click "Register New Customer" to add one.</td>
+          <td colspan="8" class="text-center text-muted py-4">{{ _('no_customers_found') }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -92,34 +92,34 @@
     <div class="modal-content">
       <form action="/customers/create" method="POST">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold"><i class="bi bi-person-plus me-2"></i>Register Customer</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-person-plus me-2"></i>{{ _('register_customer') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('customer_name') }} <span class="text-danger">*</span></label>
             <input type="text" name="full_name" class="form-control" placeholder="e.g. Rahim Ahmed" required>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-bold">Phone Number <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('phone_number') }} <span class="text-danger">*</span></label>
             <input type="text" name="phone_number" class="form-control" placeholder="e.g. +880 1711-000000" required>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-bold">National ID / Passport Number</label>
+            <label class="form-label small fw-bold">{{ _('nid_passport') }}</label>
             <input type="text" name="national_id" class="form-control" placeholder="Optional NID or Passport">
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-bold">Address</label>
+            <label class="form-label small fw-bold">{{ _('address') }}</label>
             <textarea name="address" class="form-control" rows="2" placeholder="Customer address..."></textarea>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-bold">Notes</label>
+            <label class="form-label small fw-bold">{{ _('notes') }}</label>
             <textarea name="notes" class="form-control" rows="2" placeholder="Additional reference notes..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check2-circle me-1"></i> Save Customer</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check2-circle me-1"></i> {{ _('save') }}</button>
         </div>
       </form>
     </div>

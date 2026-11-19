@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Financial Reports - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_reports') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Financial Statements & Reporting Center</h3>
-    <p class="text-muted small mb-0">Generate GAAP/IFRS-compliant financial statements, daily closing summaries, and executive reports</p>
+    <h3 class="fw-bold mb-1">{{ _('reports_center') }}</h3>
+    <p class="text-muted small mb-0">{{ _('reports_subtext') }}</p>
   </div>
 </div>
 
@@ -18,13 +18,13 @@
         <div class="d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
           <i class="bi bi-bank fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark">Balance Sheet</h5>
+        <h5 class="fw-bold text-dark">{{ _('balance_sheet') }}</h5>
         <p class="text-muted small">
           Statement of Financial Position. Real-time reconciliation of Assets (Cash, Bank, MYR Inventory, Receivables) vs. Liabilities and Owner's Equity.
         </p>
       </div>
       <a href="/reports/balance-sheet" class="btn btn-outline-primary w-100">
-        <i class="bi bi-file-earmark-text me-1"></i> View Balance Sheet
+        <i class="bi bi-file-earmark-text me-1"></i> {{ _('view') }} {{ _('balance_sheet') }}
       </a>
     </div>
   </div>
@@ -36,13 +36,13 @@
         <div class="d-inline-flex p-3 rounded-circle bg-success bg-opacity-10 text-success mb-3">
           <i class="bi bi-graph-up-arrow fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark">Profit & Loss Statement</h5>
+        <h5 class="fw-bold text-dark">{{ _('profit_loss') }}</h5>
         <p class="text-muted small">
           Income Statement showing MYR Sales Revenue, Weighted Average Cost of Goods Sold (COGS), Gross Profit, Operating Expenses, and Net Operating Profit.
         </p>
       </div>
       <a href="/reports/profit-loss" class="btn btn-outline-success w-100">
-        <i class="bi bi-file-earmark-bar-graph me-1"></i> View Profit & Loss
+        <i class="bi bi-file-earmark-bar-graph me-1"></i> {{ _('view') }} {{ _('profit_loss') }}
       </a>
     </div>
   </div>
@@ -54,13 +54,13 @@
         <div class="d-inline-flex p-3 rounded-circle bg-info bg-opacity-10 text-info mb-3">
           <i class="bi bi-water fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark">Cash Flow Statement</h5>
+        <h5 class="fw-bold text-dark">{{ _('cash_flow') }}</h5>
         <p class="text-muted small">
           Analysis of physical liquidity movements. Disaggregates cash inflows from revenue, debt collections, and expense disbursements.
         </p>
       </div>
       <a href="/reports/cash-flow" class="btn btn-outline-info w-100">
-        <i class="bi bi-cash-stack me-1"></i> View Cash Flows
+        <i class="bi bi-cash-stack me-1"></i> {{ _('view') }} {{ _('cash_flow') }}
       </a>
     </div>
   </div>
@@ -72,13 +72,13 @@
         <div class="d-inline-flex p-3 rounded-circle bg-warning bg-opacity-10 text-warning mb-3">
           <i class="bi bi-calendar-day fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark">Daily Financial Report</h5>
+        <h5 class="fw-bold text-dark">{{ _('daily_report') }}</h5>
         <p class="text-muted small">
           Comprehensive daily closing summary showing daily MYR purchases, sales, gross/net profits, payments, cash positions, and receivables.
         </p>
       </div>
       <a href="/reports/daily" class="btn btn-outline-warning w-100">
-        <i class="bi bi-calendar-check me-1"></i> View Daily Report
+        <i class="bi bi-calendar-check me-1"></i> {{ _('view') }} {{ _('daily_report') }}
       </a>
     </div>
   </div>
@@ -90,13 +90,13 @@
         <div class="d-inline-flex p-3 rounded-circle bg-secondary bg-opacity-10 text-secondary mb-3">
           <i class="bi bi-calendar-month fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark">Monthly Financial Report</h5>
+        <h5 class="fw-bold text-dark">{{ _('monthly_report') }}</h5>
         <p class="text-muted small">
           Aggregated monthly accounting performance, turnover metrics, inventory valuation, and month-over-month profit comparisons.
         </p>
       </div>
       <a href="/reports/monthly" class="btn btn-outline-secondary w-100">
-        <i class="bi bi-calendar3 me-1"></i> View Monthly Report
+        <i class="bi bi-calendar3 me-1"></i> {{ _('view') }} {{ _('monthly_report') }}
       </a>
     </div>
   </div>
@@ -114,7 +114,7 @@
         </p>
       </div>
       <a href="/reports/yearly" class="btn btn-outline-dark w-100">
-        <i class="bi bi-calendar-event me-1"></i> View Annual Report
+        <i class="bi bi-calendar-event me-1"></i> {{ _('view') }}
       </a>
     </div>
   </div>

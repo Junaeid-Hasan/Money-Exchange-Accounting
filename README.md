@@ -82,17 +82,31 @@ pip install -r requirements.txt
 # 4. Initialize database schema via Alembic migrations
 alembic upgrade head
 
-# 5. Populate initial Chart of Accounts, users, and default rates
+# 5. Populate initial Chart of Accounts, users, and default rates (Clean initial state)
 python -m app.seed
 
-# (Optional) Populate sample demo transactions
-python -m app.demo_data
+# (Optional) Clear/purge all transactional data and reset balances to zero at any time
+python -m app.clear_data
 
 # 6. Start development server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Open your browser at `http://localhost:8000`. Log in using `admin` / `admin123`.
+
+---
+
+## 5.1 Dual-Language Facility (English & Bangla)
+
+The system includes native bilingual support for:
+- 🇬🇧 **English (EN)**
+- 🇧🇩 **Bangla (বাংলা - BN)**
+
+Features:
+- Instant language switcher in the top navigation bar and on the login screen.
+- Persisted preference via secure client cookies (`lang=en` or `lang=bn`).
+- Comprehensive financial dictionary covering all accounting terms, navigation items, metrics, forms, receipts, and reports.
+
 
 ---
 

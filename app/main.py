@@ -63,6 +63,28 @@ app.include_router(settings_router)
 app.include_router(users_router)
 
 
+# Root redirect
+@app.get("/")
+def root():
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+
+
+# Language Switcher Endpoint
+@app.get("/set-language", tags=["Internationalization"])
+def set_language(lang: str = "en", next: str = "/dashboard"):
+    target_lang = "bn" if lang == "bn" else "en"
+    safe_next = next if (next and next.startswith("/") and not next.startswith("//")) else "/dashboard"
+    response = RedirectResponse(url=safe_next, status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        key="lang",
+        value=target_lang,
+        max_age=365 * 24 * 3600,
+        httponly=False,
+        samesite="lax",
+    )
+    return response
+
+
 # API endpoint for Chart.js
 @app.get("/api/v1/reports/chart-data", tags=["API Analytics"])
 def chart_data_api(days: int = 14, db: Session = Depends(get_db)):

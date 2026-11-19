@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Sell MYR (Sales) - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_sell_myr') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
     <div class="d-flex align-items-center gap-2">
       <a href="/transactions" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
-      <h3 class="fw-bold mb-0 text-success-emphasis"><i class="bi bi-arrow-up-right-circle me-2 text-success"></i>Sell MYR to Customer</h3>
+      <h3 class="fw-bold mb-0 text-success-emphasis"><i class="bi bi-arrow-up-right-circle me-2 text-success"></i>{{ _('nav_sell_myr') }}</h3>
     </div>
-    <p class="text-muted small mb-0 mt-1">Customer purchases Malaysian Ringgit (MYR) from company in exchange for Bangladeshi Taka (BDT)</p>
+    <p class="text-muted small mb-0 mt-1">{{ _('transaction_mgmt_subtext') }}</p>
   </div>
   <div>
     <span class="badge bg-primary fs-6 px-3 py-2">
-      <i class="bi bi-box-seam me-1"></i> Available Stock: <b>{{ "{:,.2f}".format(inventory.total_quantity) }} MYR</b>
+      <i class="bi bi-box-seam me-1"></i> {{ _('available_stock') }}: <b>{{ "{:,.2f}".format(inventory.total_quantity) }} MYR</b>
     </span>
   </div>
 </div>
@@ -23,13 +23,13 @@
     {% if inventory.total_quantity <= 0 %}
     <div class="alert alert-danger mb-4 shadow-sm">
       <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
-      <strong>Zero Inventory Warning:</strong> You currently have 0.00 MYR in inventory. You must first purchase MYR before selling to customers.
+      <strong>{{ _('warning') if _('warning') != 'Warning' else 'সতর্কবার্তা' }}:</strong> {{ _('zero_inventory_warning', default='You currently have 0.00 MYR in inventory. You must first purchase MYR before selling to customers.') }}
     </div>
     {% endif %}
 
     <div class="app-card">
       <div class="app-card-header bg-success bg-opacity-10">
-        <h5 class="app-card-title text-success-emphasis"><i class="bi bi-receipt me-2"></i>New MYR Sales Voucher</h5>
+        <h5 class="app-card-title text-success-emphasis"><i class="bi bi-receipt me-2"></i>{{ _('sales') }}</h5>
       </div>
       <div class="app-card-body p-4">
         {% if error %}
@@ -42,11 +42,11 @@
           <!-- Customer Selection -->
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label small fw-bold mb-0">Select Customer <span class="text-danger">*</span></label>
-              <a href="/customers" target="_blank" class="small text-decoration-none"><i class="bi bi-person-plus me-1"></i>New Customer</a>
+              <label class="form-label small fw-bold mb-0">{{ _('select_customer') }} <span class="text-danger">*</span></label>
+              <a href="/customers" target="_blank" class="small text-decoration-none"><i class="bi bi-person-plus me-1"></i>{{ _('new_customer_link') }}</a>
             </div>
             <select name="customer_id" class="form-select" required>
-              <option value="" disabled selected>-- Choose customer --</option>
+              <option value="" disabled selected>{{ _('choose_customer') }}</option>
               {% for c in customers %}
               <option value="{{ c.id }}">{{ c.full_name }} ({{ c.customer_code }}) - Phone: {{ c.phone_number }}</option>
               {% endfor %}
@@ -56,28 +56,28 @@
           <div class="row g-3 mb-3">
             <!-- MYR Quantity -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">MYR Quantity to Sell <span class="text-danger">*</span></label>
+              <label class="form-label small fw-bold">{{ _('myr_quantity') }} <span class="text-danger">*</span></label>
               <div class="input-group">
                 <input type="number" step="0.01" min="0.01" max="{{ inventory.total_quantity }}" name="myr_quantity" id="myrQty" class="form-control fw-bold fs-5 text-success" placeholder="0.00" required>
                 <span class="input-group-text">MYR</span>
               </div>
-              <div class="form-text small">Max available: {{ "{:,.2f}".format(inventory.total_quantity) }} MYR</div>
+              <div class="form-text small">{{ _('available_stock') }}: {{ "{:,.2f}".format(inventory.total_quantity) }} MYR</div>
             </div>
 
             <!-- Selling Rate -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Selling Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+              <label class="form-label small fw-bold">{{ _('selling_rate') }} <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text">৳</span>
                 <input type="number" step="0.0001" min="0.0001" name="selling_rate" id="sellingRate" value="{{ default_rate.default_selling_rate if default_rate else '310.0000' }}" class="form-control fw-bold fs-5" required>
               </div>
-              <div class="form-text small">Default company rate auto-populated; adjustable if authorized.</div>
+              <div class="form-text small">{{ _('rate_hint') }}</div>
             </div>
           </div>
 
           <!-- Total Calculation Card -->
           <div class="p-3 mb-3 bg-light rounded border text-center">
-            <div class="text-muted small text-uppercase fw-bold">Total Sales Value (BDT)</div>
+            <div class="text-muted small text-uppercase fw-bold">{{ _('total_sale_val') }}</div>
             <div class="fs-2 fw-bold text-success" id="displayTotalBdt">৳0.00</div>
             <div class="small text-muted" id="displayFormula">0.00 MYR × ৳0.00 = ৳0.00</div>
           </div>
@@ -85,32 +85,32 @@
           <div class="row g-3 mb-3">
             <!-- Initial Payment Received -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Immediate Cash/Bank Received (BDT)</label>
+              <label class="form-label small fw-bold">{{ _('initial_payment') }}</label>
               <div class="input-group">
                 <span class="input-group-text">৳</span>
                 <input type="number" step="0.01" min="0" name="initial_payment" id="initialPayment" value="0.00" class="form-control fw-bold fs-5 text-primary">
               </div>
               <div class="d-flex gap-2 mt-1">
-                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setFullPayment()">Full Payment</button>
-                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setZeroPayment()">Zero (Full Credit)</button>
+                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setFullPayment()">{{ _('full_payment_btn') }}</button>
+                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setZeroPayment()">{{ _('zero_payment_btn') }}</button>
               </div>
             </div>
 
             <!-- Outstanding Receivable Result -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Remaining Customer Receivable (Due)</label>
+              <label class="form-label small fw-bold">{{ _('remaining_receivable') }}</label>
               <div class="input-group">
                 <span class="input-group-text">৳</span>
                 <input type="text" id="displayOutstanding" class="form-control fw-bold fs-5 text-warning bg-white" readonly value="৳0.00">
               </div>
-              <div class="form-text small">Will be recorded under Accounts Receivable (Asset).</div>
+              <div class="form-text small">{{ _('receivable_asset_note') }}</div>
             </div>
           </div>
 
           <div class="row g-3 mb-3">
             <!-- Receiving Account -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Receiving Cash / Bank Account</label>
+              <label class="form-label small fw-bold">{{ _('receiving_account') }}</label>
               <select name="cash_account_id" class="form-select">
                 {% for ca in cash_accounts %}
                 <option value="{{ ca.id }}">{{ ca.account_name }} (Bal: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
@@ -120,23 +120,23 @@
 
             <!-- Payment Method -->
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Payment Method</label>
+              <label class="form-label small fw-bold">{{ _('payment_method') }}</label>
               <select name="payment_method" class="form-select">
-                <option value="CASH">Cash in Hand</option>
-                <option value="BANK_TRANSFER">Bank Wire / Cheque</option>
-                <option value="MFS">Mobile Financial Services (bKash/Nagad)</option>
+                <option value="CASH">{{ _('method_cash') }}</option>
+                <option value="BANK_TRANSFER">{{ _('method_bank') }}</option>
+                <option value="MFS">{{ _('method_mfs') }}</option>
               </select>
             </div>
           </div>
 
           <div class="mb-4">
-            <label class="form-label small fw-bold">Transaction Reference Notes</label>
-            <input type="text" name="notes" class="form-control" placeholder="Optional reference notes...">
+            <label class="form-label small fw-bold">{{ _('notes') }}</label>
+            <input type="text" name="notes" class="form-control" placeholder="{{ _('notes_placeholder') }}">
           </div>
 
           <div class="d-grid">
             <button type="submit" class="btn btn-success py-2 fw-bold fs-6" {% if inventory.total_quantity <= 0 %}disabled{% endif %}>
-              <i class="bi bi-check2-circle me-1"></i> Post Sales Transaction & Deduct Inventory
+              <i class="bi bi-check2-circle me-1"></i> {{ _('confirm_sales_btn') }}
             </button>
           </div>
         </form>

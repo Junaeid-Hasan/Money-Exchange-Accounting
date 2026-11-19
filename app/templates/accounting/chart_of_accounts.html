@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Chart of Accounts - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_coa') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Chart of Accounts (General Ledger)</h3>
-    <p class="text-muted small mb-0">Structured financial accounts framework adhering to standard double-entry bookkeeping</p>
+    <h3 class="fw-bold mb-1">{{ _('chart_of_accounts') }}</h3>
+    <p class="text-muted small mb-0">{{ _('coa_subtext') }}</p>
   </div>
 </div>
 
 <div class="app-card">
   <div class="app-card-header">
-    <h5 class="app-card-title">General Ledger Accounts ({{ accounts | length }})</h5>
+    <h5 class="app-card-title">{{ _('chart_of_accounts') }} ({{ accounts | length }})</h5>
   </div>
   <div class="table-responsive">
     <table class="table app-table">
       <thead>
         <tr>
-          <th>Account Code</th>
-          <th>Account Name</th>
-          <th>Category Type</th>
+          <th>{{ _('account_code') if _('account_code') != 'Account Code' else 'হিসাব কোড' }}</th>
+          <th>{{ _('account_name') if _('account_name') != 'Account Name' else 'হিসাবের নাম' }}</th>
+          <th>{{ _('account_type') if _('account_type') != 'Account Type' else 'হিসাবের ধরন' }}</th>
           <th>Normal Balance</th>
-          <th>Status</th>
+          <th>{{ _('status') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -47,7 +47,7 @@
             <span class="badge bg-light text-secondary border">{{ a.normal_balance }}</span>
           </td>
           <td>
-            <span class="badge bg-success">ACTIVE</span>
+            <span class="badge bg-success">{{ _('status_active') }}</span>
           </td>
         </tr>
         {% endfor %}

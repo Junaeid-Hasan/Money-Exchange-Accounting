@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Exchange Rates - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_rates') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Company Exchange Rate Management</h3>
-    <p class="text-muted small mb-0">Independently control company purchase and selling rates for Malaysian Ringgit (MYR)</p>
+    <h3 class="fw-bold mb-1">{{ _('rate_management') }}</h3>
+    <p class="text-muted small mb-0">{{ _('rate_mgmt_subtext') }}</p>
   </div>
 </div>
 
@@ -14,27 +14,27 @@
 <div class="row g-3 mb-4">
   <div class="col-md-4">
     <div class="metric-card border-start border-4 border-info">
-      <div class="metric-title">Active Purchase Rate (We Buy MYR)</div>
+      <div class="metric-title">{{ _('current_purchase_rate') }}</div>
       <div class="metric-value text-info">
         ৳{{ "{:,.4f}".format(current_rate.default_purchase_rate) if current_rate else "0.0000" }}
       </div>
-      <div class="metric-subtext">Amount paid in BDT per 1 MYR to customer</div>
+      <div class="metric-subtext">{{ _('purchase_rate') }}</div>
     </div>
   </div>
 
   <div class="col-md-4">
     <div class="metric-card border-start border-4 border-success">
-      <div class="metric-title">Active Selling Rate (We Sell MYR)</div>
+      <div class="metric-title">{{ _('current_selling_rate') }}</div>
       <div class="metric-value text-success">
         ৳{{ "{:,.4f}".format(current_rate.default_selling_rate) if current_rate else "0.0000" }}
       </div>
-      <div class="metric-subtext">Amount received in BDT per 1 MYR from customer</div>
+      <div class="metric-subtext">{{ _('selling_rate') }}</div>
     </div>
   </div>
 
   <div class="col-md-4">
     <div class="metric-card border-start border-4 border-primary">
-      <div class="metric-title">Trading Gross Spread</div>
+      <div class="metric-title">{{ _('rate_spread') }}</div>
       <div class="metric-value text-primary">
         {% if current_rate %}
         ৳{{ "{:,.4f}".format(current_rate.default_selling_rate - current_rate.default_purchase_rate) }}
@@ -42,7 +42,7 @@
         ৳0.0000
         {% endif %}
       </div>
-      <div class="metric-subtext">Company spread margin per Ringgit</div>
+      <div class="metric-subtext">{{ _('margin_bdt') if _('margin_bdt') != 'Margin Bdt' else 'মুনাফার ব্যবধান' }}</div>
     </div>
   </div>
 </div>
@@ -52,13 +52,13 @@
   <div class="col-lg-4">
     <div class="app-card">
       <div class="app-card-header">
-        <h5 class="app-card-title"><i class="bi bi-pencil-square text-primary me-2"></i>Update Default Rates</h5>
+        <h5 class="app-card-title"><i class="bi bi-pencil-square text-primary me-2"></i>{{ _('update_rates') }}</h5>
       </div>
       <div class="app-card-body">
         {% if current_user.role_code == 'ADMIN' %}
         <form action="/rates/update" method="POST">
           <div class="mb-3">
-            <label class="form-label small fw-bold">Default Purchase Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('purchase_rate') }} <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">৳</span>
               <input type="number" step="0.0001" name="purchase_rate" value="{{ current_rate.default_purchase_rate if current_rate else '300.0000' }}" class="form-control fw-bold" required>
@@ -67,7 +67,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Default Selling Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('selling_rate') }} <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">৳</span>
               <input type="number" step="0.0001" name="selling_rate" value="{{ current_rate.default_selling_rate if current_rate else '310.0000' }}" class="form-control fw-bold" required>
@@ -76,7 +76,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary w-100 py-2">
-            <i class="bi bi-check-circle me-1"></i> Save New Default Rates
+            <i class="bi bi-check-circle me-1"></i> {{ _('save_rates') }}
           </button>
         </form>
         {% else %}
@@ -97,19 +97,19 @@
   <div class="col-lg-8">
     <div class="app-card">
       <div class="app-card-header">
-        <h5 class="app-card-title"><i class="bi bi-clock-history text-secondary me-2"></i>Rate Change History</h5>
+        <h5 class="app-card-title"><i class="bi bi-clock-history text-secondary me-2"></i>{{ _('rate_history') }}</h5>
       </div>
       <div class="table-responsive">
         <table class="table app-table">
           <thead>
             <tr>
               <th>Currency</th>
-              <th>Purchase Rate</th>
-              <th>Selling Rate</th>
-              <th>Spread</th>
-              <th>Effective From</th>
-              <th>Effective To</th>
-              <th>Status</th>
+              <th>{{ _('current_purchase_rate') }}</th>
+              <th>{{ _('current_selling_rate') }}</th>
+              <th>{{ _('rate_spread') }}</th>
+              <th>{{ _('effective_from') }}</th>
+              <th>{{ _('effective_to') }}</th>
+              <th>{{ _('status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -123,7 +123,7 @@
               <td>{{ r.effective_to.strftime('%Y-%m-%d %H:%M') if r.effective_to else 'Current' }}</td>
               <td>
                 {% if r.is_active %}
-                <span class="badge bg-success">ACTIVE</span>
+                <span class="badge bg-success">{{ _('status_active') }}</span>
                 {% else %}
                 <span class="badge bg-secondary">HISTORICAL</span>
                 {% endif %}

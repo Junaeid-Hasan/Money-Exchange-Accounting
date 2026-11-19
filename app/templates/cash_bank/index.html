@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Cash & Bank Management - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_cash_bank') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Cash & Bank Treasury Management</h3>
-    <p class="text-muted small mb-0">Multi-tender account monitoring, inter-account contra transfers, and daily physical drawer reconciliation</p>
+    <h3 class="fw-bold mb-1">{{ _('cash_bank_title') }}</h3>
+    <p class="text-muted small mb-0">{{ _('cash_bank_subtext') }}</p>
   </div>
   <div class="d-flex gap-2">
     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
-      <i class="bi bi-arrow-left-right me-1"></i> Transfer Funds (Contra)
+      <i class="bi bi-arrow-left-right me-1"></i> {{ _('transfer_funds') }}
     </button>
     <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#reconcileModal">
-      <i class="bi bi-check2-all me-1"></i> Daily Cash Reconciliation
+      <i class="bi bi-check2-all me-1"></i> {{ _('daily_reconciliation') }}
     </button>
   </div>
 </div>
@@ -44,7 +44,7 @@
       <i class="bi bi-wallet2"></i>
     </div>
     <div>
-      <div class="text-muted small text-uppercase fw-bold">Total Liquid Cash Reserves</div>
+      <div class="text-muted small text-uppercase fw-bold">{{ _('total_cash_bank') }}</div>
       <h4 class="fw-bold text-dark mb-0">৳{{ "{:,.2f}".format(total_cash) }}</h4>
     </div>
   </div>
@@ -57,20 +57,20 @@
 <!-- Recent Cash Movements -->
 <div class="app-card">
   <div class="app-card-header">
-    <h5 class="app-card-title"><i class="bi bi-clock-history me-2"></i>Recent Cash & Bank Movements</h5>
-    <span class="badge bg-light text-secondary border">Recent 50 Activities</span>
+    <h5 class="app-card-title"><i class="bi bi-clock-history me-2"></i>{{ _('nav_cash_bank') }}</h5>
+    <span class="badge bg-light text-secondary border">Recent Activities</span>
   </div>
   <div class="table-responsive">
     <table class="table app-table">
       <thead>
         <tr>
-          <th>Date & Time</th>
-          <th>Account</th>
-          <th>Type</th>
-          <th>Reference Type</th>
-          <th>Activity Notes</th>
-          <th class="text-end">Amount (BDT)</th>
-          <th class="text-end">Resulting Balance</th>
+          <th>{{ _('date') }}</th>
+          <th>{{ _('account_name') }}</th>
+          <th>{{ _('transaction_type') }}</th>
+          <th>{{ _('reference_voucher') }}</th>
+          <th>{{ _('notes') }}</th>
+          <th class="text-end">{{ _('total_amount_bdt') }}</th>
+          <th class="text-end">{{ _('current_balance') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -108,12 +108,12 @@
     <div class="modal-content">
       <form action="/cash-bank/transfer" method="POST">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Inter-Account Transfer (Contra Entry)</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>{{ _('transfer_funds') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label small fw-bold">Source Account (Outflow) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('from_account') }} <span class="text-danger">*</span></label>
             <select name="from_account_id" class="form-select" required>
               {% for ca in cash_accounts %}
               <option value="{{ ca.id }}">{{ ca.account_name }} (Current: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
@@ -122,7 +122,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Destination Account (Inflow) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('to_account') }} <span class="text-danger">*</span></label>
             <select name="to_account_id" class="form-select" required>
               {% for ca in cash_accounts %}
               <option value="{{ ca.id }}">{{ ca.account_name }} (Current: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
@@ -131,7 +131,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Transfer Amount (BDT) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('transfer_amount') }} <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">৳</span>
               <input type="number" step="0.01" min="0.01" name="amount" class="form-control fw-bold" placeholder="0.00" required>
@@ -139,18 +139,18 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Transfer Date <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('date') }} <span class="text-danger">*</span></label>
             <input type="date" name="transfer_date" value="{{ today_str }}" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Notes / Cheque #</label>
+            <label class="form-label small fw-bold">{{ _('notes') }}</label>
             <input type="text" name="notes" class="form-control" placeholder="e.g. Physical cash deposit to BRAC Bank">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i> Execute Transfer</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i> {{ _('submit') }}</button>
         </div>
       </form>
     </div>
@@ -163,12 +163,12 @@
     <div class="modal-content">
       <form action="/cash-bank/reconcile" method="POST">
         <div class="modal-header bg-success text-white">
-          <h5 class="modal-title fw-bold"><i class="bi bi-check2-all me-2"></i>Daily Cash Drawer Reconciliation</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-check2-all me-2"></i>{{ _('daily_reconciliation') }}</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label small fw-bold">Cash Account to Reconcile <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('account_name') }} <span class="text-danger">*</span></label>
             <select name="cash_account_id" class="form-select" required>
               {% for ca in cash_accounts %}
               <option value="{{ ca.id }}">{{ ca.account_name }} (System Balance: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
@@ -177,27 +177,26 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Reconciliation Date <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('date') }} <span class="text-danger">*</span></label>
             <input type="date" name="reconciliation_date" value="{{ today_str }}" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Physical Counted Cash (BDT) <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">{{ _('physical_count') }} <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">৳</span>
               <input type="number" step="0.01" min="0" name="physical_balance" class="form-control fw-bold fs-5" placeholder="0.00" required>
             </div>
-            <div class="form-text small">Enter actual counted notes in the physical drawer.</div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-bold">Discrepancy Notes / Explanation</label>
+            <label class="form-label small fw-bold">{{ _('discrepancy') }} / {{ _('notes') }}</label>
             <input type="text" name="notes" class="form-control" placeholder="e.g. End of day counter count verified by teller">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success btn-sm fw-bold">Save Reconciliation</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="submit" class="btn btn-success btn-sm fw-bold">{{ _('save') }}</button>
         </div>
       </form>
     </div>

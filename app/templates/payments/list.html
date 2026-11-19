@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Payments & Settlements - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_payments') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Payments & Installment Settlements</h3>
+    <h3 class="fw-bold mb-1">{{ _('nav_payments') }}</h3>
     <p class="text-muted small mb-0">Record and track all bilateral cash receipts from debtors and disbursements to creditors</p>
   </div>
 </div>
@@ -17,22 +17,22 @@
       <div class="col-md-4">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-          <input type="text" name="search" value="{{ search or '' }}" class="form-control" placeholder="Search Payment # or Customer...">
+          <input type="text" name="search" value="{{ search or '' }}" class="form-control" placeholder="{{ _('search') }}...">
         </div>
       </div>
       <div class="col-md-3">
         <select name="type" class="form-select form-select-sm">
-          <option value="">All Payment Types</option>
-          <option value="INCOMING" {% if selected_type == 'INCOMING' %}selected{% endif %}>Incoming (Customer Paid Us)</option>
-          <option value="OUTGOING" {% if selected_type == 'OUTGOING' %}selected{% endif %}>Outgoing (Company Paid Customer)</option>
+          <option value="">{{ _('all_types') }}</option>
+          <option value="INCOMING" {% if selected_type == 'INCOMING' %}selected{% endif %}>Incoming</option>
+          <option value="OUTGOING" {% if selected_type == 'OUTGOING' %}selected{% endif %}>Outgoing</option>
         </select>
       </div>
       <div class="col-md-2">
-        <button type="submit" class="btn btn-sm btn-secondary w-100"><i class="bi bi-filter me-1"></i> Filter</button>
+        <button type="submit" class="btn btn-sm btn-secondary w-100"><i class="bi bi-filter me-1"></i> {{ _('filter') }}</button>
       </div>
       <div class="col-md-2">
         {% if search or selected_type %}
-        <a href="/payments" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
+        <a href="/payments" class="btn btn-sm btn-outline-secondary w-100">{{ _('clear') }}</a>
         {% endif %}
       </div>
     </form>
@@ -42,22 +42,21 @@
 <!-- Payments Table -->
 <div class="app-card">
   <div class="app-card-header">
-    <h5 class="app-card-title">Recorded Settlements ({{ total_count }})</h5>
+    <h5 class="app-card-title">{{ _('nav_payments') }} ({{ total_count }})</h5>
   </div>
   <div class="table-responsive">
     <table class="table app-table">
       <thead>
         <tr>
-          <th>Payment #</th>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Customer</th>
-          <th>Related Transaction</th>
-          <th>Disbursed From / To</th>
-          <th>Method</th>
-          <th>Amount (BDT)</th>
-          <th>Recorded By</th>
-          <th>Action</th>
+          <th>{{ _('transaction_no') }}</th>
+          <th>{{ _('date') }}</th>
+          <th>{{ _('transaction_type') }}</th>
+          <th>{{ _('customer') }}</th>
+          <th>{{ _('reference_voucher') }}</th>
+          <th>{{ _('disbursement_account') }}</th>
+          <th>{{ _('payment_method') }}</th>
+          <th>{{ _('total_amount_bdt') }}</th>
+          <th>{{ _('action') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -67,9 +66,9 @@
           <td>{{ p.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
           <td>
             {% if p.payment_type == 'INCOMING' %}
-            <span class="badge badge-status badge-paid">INCOMING (Collection)</span>
+            <span class="badge badge-status badge-paid">INCOMING</span>
             {% else %}
-            <span class="badge badge-status badge-unpaid">OUTGOING (Disbursement)</span>
+            <span class="badge badge-status badge-unpaid">OUTGOING</span>
             {% endif %}
           </td>
           <td class="fw-semibold">
@@ -85,16 +84,15 @@
           <td class="fw-bold {% if p.payment_type == 'INCOMING' %}text-success{% else %}text-danger{% endif %}">
             ৳{{ "{:,.2f}".format(p.amount_bdt) }}
           </td>
-          <td class="small text-muted">{{ p.created_by_user.full_name }}</td>
           <td>
-            <a href="/payments/{{ p.id }}/receipt/pdf" class="btn btn-sm btn-outline-danger py-0" target="_blank" title="Download Receipt PDF">
+            <a href="/payments/{{ p.id }}/receipt/pdf" class="btn btn-sm btn-outline-danger py-0" target="_blank" title="{{ _('export_pdf') }}">
               <i class="bi bi-file-earmark-pdf"></i> Receipt
             </a>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="10" class="text-center text-muted py-4">No payments recorded.</td>
+          <td colspan="9" class="text-center text-muted py-4">No payments recorded.</td>
         </tr>
         {% endfor %}
       </tbody>

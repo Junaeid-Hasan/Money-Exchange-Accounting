@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Journal Entries - Money Exchange & Accounting System{% endblock %}
+{% block title %}{{ _('nav_journal') }} - {{ _('system_title') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h3 class="fw-bold mb-1">Double-Entry Journal Entries</h3>
-    <p class="text-muted small mb-0">Immutable transaction journal vouchers maintaining total debit and credit equality</p>
+    <h3 class="fw-bold mb-1">{{ _('journal_entries') }}</h3>
+    <p class="text-muted small mb-0">{{ _('journal_subtext') }}</p>
   </div>
 </div>
 
 <div class="app-card">
   <div class="app-card-header">
-    <h5 class="app-card-title">Posted Journal Vouchers</h5>
+    <h5 class="app-card-title">{{ _('journal_entries') }}</h5>
   </div>
   <div class="table-responsive">
     <table class="table app-table">
       <thead>
         <tr>
-          <th>Entry #</th>
-          <th>Date</th>
-          <th>Reference Type</th>
-          <th>Memo / Description</th>
-          <th>Debit / Credit Lines Breakdown</th>
-          <th>Status</th>
+          <th>{{ _('transaction_no') }}</th>
+          <th>{{ _('date') }}</th>
+          <th>{{ _('reference_voucher') }}</th>
+          <th>{{ _('notes') }}</th>
+          <th>{{ _('debit') }} / {{ _('credit') }}</th>
+          <th>{{ _('status') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -54,7 +54,7 @@
             {% if je.is_reversed %}
             <span class="badge bg-danger">REVERSED</span>
             {% else %}
-            <span class="badge bg-success">POSTED</span>
+            <span class="badge bg-success">{{ _('status_completed') }}</span>
             {% endif %}
           </td>
         </tr>

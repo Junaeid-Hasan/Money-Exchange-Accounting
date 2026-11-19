@@ -131,3 +131,45 @@ def test_pdf_and_excel_exports(client, db_session):
     assert resp.status_code == 200
     assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in resp.headers["content-type"]
     assert len(resp.content) > 500
+
+
+def test_language_switch_and_bilingual_rendering(client, db_session):
+    admin = db_session.query(User).filter_by(username="admin").first()
+    token = create_access_token(data={"sub": admin.username, "role": admin.role_code})
+    client.cookies.set("access_token", f"Bearer {token}")
+
+    # 1. Test language switch endpoint
+    resp = client.get("/set-language?lang=bn&next=/dashboard", follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/dashboard"
+    assert "lang=bn" in resp.headers["set-cookie"]
+
+    # 2. Test Dashboard rendering in Bengali
+    client.cookies.set("lang", "bn")
+    resp_bn = client.get("/dashboard")
+    assert resp_bn.status_code == 200
+    assert "আর্থিক কার্যক্রমের ড্যাশবোর্ড" in resp_bn.text
+    assert "মোট নগদ ও ব্যাংক টাকা" in resp_bn.text
+    assert "আজকের মোট লাভ" in resp_bn.text
+    assert "বাংলা" in resp_bn.text
+
+    # 3. Test Customers rendering in Bengali
+    resp_cust_bn = client.get("/customers")
+    assert resp_cust_bn.status_code == 200
+    assert "গ্রাহক ব্যবস্থাপনা" in resp_cust_bn.text
+    assert "গ্রাহক তালিকা" in resp_cust_bn.text
+
+    # 4. Switch back to English
+    resp_switch_en = client.get("/set-language?lang=en&next=/dashboard", follow_redirects=False)
+    assert resp_switch_en.status_code == 303
+    assert "lang=en" in resp_switch_en.headers["set-cookie"]
+
+    # 5. Test Dashboard rendering in English
+    client.cookies.set("lang", "en")
+    resp_en = client.get("/dashboard")
+    assert resp_en.status_code == 200
+    assert "Financial Operations Dashboard" in resp_en.text
+    assert "Total BDT Cash" in resp_en.text
+    assert "Today's Gross Profit" in resp_en.text
+    assert "English" in resp_en.text
+
