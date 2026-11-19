@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Sell MYR (Sales) - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="/transactions" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h3 class="fw-bold mb-0 text-success-emphasis"><i class="bi bi-arrow-up-right-circle me-2 text-success"></i>Sell MYR to Customer</h3>
+    </div>
+    <p class="text-muted small mb-0 mt-1">Customer purchases Malaysian Ringgit (MYR) from company in exchange for Bangladeshi Taka (BDT)</p>
+  </div>
+  <div>
+    <span class="badge bg-primary fs-6 px-3 py-2">
+      <i class="bi bi-box-seam me-1"></i> Available Stock: <b>{{ "{:,.2f}".format(inventory.total_quantity) }} MYR</b>
+    </span>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    {% if inventory.total_quantity <= 0 %}
+    <div class="alert alert-danger mb-4 shadow-sm">
+      <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+      <strong>Zero Inventory Warning:</strong> You currently have 0.00 MYR in inventory. You must first purchase MYR before selling to customers.
+    </div>
+    {% endif %}
+
+    <div class="app-card">
+      <div class="app-card-header bg-success bg-opacity-10">
+        <h5 class="app-card-title text-success-emphasis"><i class="bi bi-receipt me-2"></i>New MYR Sales Voucher</h5>
+      </div>
+      <div class="app-card-body p-4">
+        {% if error %}
+        <div class="alert alert-danger py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/transactions/sales" method="POST" id="salesForm">
+          <!-- Customer Selection -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold mb-0">Select Customer <span class="text-danger">*</span></label>
+              <a href="/customers" target="_blank" class="small text-decoration-none"><i class="bi bi-person-plus me-1"></i>New Customer</a>
+            </div>
+            <select name="customer_id" class="form-select" required>
+              <option value="" disabled selected>-- Choose customer --</option>
+              {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.full_name }} ({{ c.customer_code }}) - Phone: {{ c.phone_number }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <!-- MYR Quantity -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">MYR Quantity to Sell <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0.01" max="{{ inventory.total_quantity }}" name="myr_quantity" id="myrQty" class="form-control fw-bold fs-5 text-success" placeholder="0.00" required>
+                <span class="input-group-text">MYR</span>
+              </div>
+              <div class="form-text small">Max available: {{ "{:,.2f}".format(inventory.total_quantity) }} MYR</div>
+            </div>
+
+            <!-- Selling Rate -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Selling Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">৳</span>
+                <input type="number" step="0.0001" min="0.0001" name="selling_rate" id="sellingRate" value="{{ default_rate.default_selling_rate if default_rate else '310.0000' }}" class="form-control fw-bold fs-5" required>
+              </div>
+              <div class="form-text small">Default company rate auto-populated; adjustable if authorized.</div>
+            </div>
+          </div>
+
+          <!-- Total Calculation Card -->
+          <div class="p-3 mb-3 bg-light rounded border text-center">
+            <div class="text-muted small text-uppercase fw-bold">Total Sales Value (BDT)</div>
+            <div class="fs-2 fw-bold text-success" id="displayTotalBdt">৳0.00</div>
+            <div class="small text-muted" id="displayFormula">0.00 MYR × ৳0.00 = ৳0.00</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <!-- Initial Payment Received -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Immediate Cash/Bank Received (BDT)</label>
+              <div class="input-group">
+                <span class="input-group-text">৳</span>
+                <input type="number" step="0.01" min="0" name="initial_payment" id="initialPayment" value="0.00" class="form-control fw-bold fs-5 text-primary">
+              </div>
+              <div class="d-flex gap-2 mt-1">
+                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setFullPayment()">Full Payment</button>
+                <button type="button" class="btn btn-xs btn-outline-secondary py-0 small" onclick="setZeroPayment()">Zero (Full Credit)</button>
+              </div>
+            </div>
+
+            <!-- Outstanding Receivable Result -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Remaining Customer Receivable (Due)</label>
+              <div class="input-group">
+                <span class="input-group-text">৳</span>
+                <input type="text" id="displayOutstanding" class="form-control fw-bold fs-5 text-warning bg-white" readonly value="৳0.00">
+              </div>
+              <div class="form-text small">Will be recorded under Accounts Receivable (Asset).</div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <!-- Receiving Account -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Receiving Cash / Bank Account</label>
+              <select name="cash_account_id" class="form-select">
+                {% for ca in cash_accounts %}
+                <option value="{{ ca.id }}">{{ ca.account_name }} (Bal: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Payment Method</label>
+              <select name="payment_method" class="form-select">
+                <option value="CASH">Cash in Hand</option>
+                <option value="BANK_TRANSFER">Bank Wire / Cheque</option>
+                <option value="MFS">Mobile Financial Services (bKash/Nagad)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold">Transaction Reference Notes</label>
+            <input type="text" name="notes" class="form-control" placeholder="Optional reference notes...">
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success py-2 fw-bold fs-6" {% if inventory.total_quantity <= 0 %}disabled{% endif %}>
+              <i class="bi bi-check2-circle me-1"></i> Post Sales Transaction & Deduct Inventory
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const qtyInput = document.getElementById("myrQty");
+  const rateInput = document.getElementById("sellingRate");
+  const initialPayInput = document.getElementById("initialPayment");
+  const totalBdtEl = document.getElementById("displayTotalBdt");
+  const formulaEl = document.getElementById("displayFormula");
+  const outstandingEl = document.getElementById("displayOutstanding");
+
+  function calculateTotals() {
+    const qty = parseFloat(qtyInput.value) || 0;
+    const rate = parseFloat(rateInput.value) || 0;
+    const total = qty * rate;
+    let initialPay = parseFloat(initialPayInput.value) || 0;
+
+    if (initialPay > total) {
+      initialPay = total;
+      initialPayInput.value = initialPay.toFixed(2);
+    }
+
+    const due = Math.max(0, total - initialPay);
+
+    totalBdtEl.textContent = "৳" + total.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    formulaEl.textContent = `${qty.toLocaleString()} MYR × ৳${rate.toFixed(4)} = ৳${total.toLocaleString("en-BD", { minimumFractionDigits: 2 })}`;
+    outstandingEl.value = "৳" + due.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function setFullPayment() {
+    const qty = parseFloat(qtyInput.value) || 0;
+    const rate = parseFloat(rateInput.value) || 0;
+    initialPayInput.value = (qty * rate).toFixed(2);
+    calculateTotals();
+  }
+
+  function setZeroPayment() {
+    initialPayInput.value = "0.00";
+    calculateTotals();
+  }
+
+  qtyInput.addEventListener("input", calculateTotals);
+  rateInput.addEventListener("input", calculateTotals);
+  initialPayInput.addEventListener("input", calculateTotals);
+</script>
+{% endblock %}

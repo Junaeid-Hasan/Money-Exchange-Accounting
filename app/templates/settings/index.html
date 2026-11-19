@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Company Settings - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Company Information & Settings</h3>
+    <p class="text-muted small mb-0">Configure company profile, receipt header/footer details, and system defaults</p>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-building me-2 text-primary"></i>Company Configuration</h5>
+      </div>
+      <div class="app-card-body p-4">
+        {% if success %}
+        <div class="alert alert-success py-2 small mb-3">
+          <i class="bi bi-check-circle-fill me-2"></i>Settings updated successfully!
+        </div>
+        {% endif %}
+
+        <form action="/settings/update" method="POST">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Company Legal Name <span class="text-danger">*</span></label>
+            <input type="text" name="company_name" value="{{ settings.company_name }}" class="form-control" required>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Base Currency</label>
+              <input type="text" value="BDT (Bangladeshi Taka)" class="form-control bg-light" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Primary Foreign Currency</label>
+              <input type="text" value="MYR (Malaysian Ringgit)" class="form-control bg-light" readonly>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Official Phone Number</label>
+              <input type="text" name="phone" value="{{ settings.phone or '' }}" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Official Email Address</label>
+              <input type="email" name="email" value="{{ settings.email or '' }}" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Business Trade License / Registration #</label>
+            <input type="text" name="trade_license_number" value="{{ settings.trade_license_number or '' }}" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Office Address</label>
+            <textarea name="address" class="form-control" rows="2">{{ settings.address or '' }}</textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Timezone</label>
+            <input type="text" name="timezone" value="{{ settings.timezone }}" class="form-control bg-light" readonly>
+            <div class="form-text small">Default operational timezone: Asia/Dhaka (+06:00)</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold">Transaction Receipt Footer Legal Note</label>
+            <textarea name="receipt_footer_note" class="form-control" rows="2">{{ settings.receipt_footer_note or '' }}</textarea>
+            <div class="form-text small">Appears on all printed receipts and PDF statements.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary py-2 px-4 fw-semibold">
+            <i class="bi bi-save me-1"></i> Save Company Settings
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

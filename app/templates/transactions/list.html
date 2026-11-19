@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Transaction Management</h3>
+    <p class="text-muted small mb-0">Centralized log of all currency purchases and sales with automated accounting integration</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/transactions/export/excel" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+    </a>
+    <a href="/transactions/purchase" class="btn btn-info text-white btn-sm">
+      <i class="bi bi-arrow-down-left-circle me-1"></i> Buy MYR
+    </a>
+    <a href="/transactions/sales" class="btn btn-success btn-sm">
+      <i class="bi bi-arrow-up-right-circle me-1"></i> Sell MYR
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="app-card mb-4">
+  <div class="app-card-body py-3">
+    <form method="GET" action="/transactions" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" name="search" value="{{ search or '' }}" class="form-control" placeholder="Search Tx # or Customer...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select name="type" class="form-select form-select-sm">
+          <option value="">All Types</option>
+          <option value="PURCHASE" {% if selected_type == 'PURCHASE' %}selected{% endif %}>Purchase (Buy)</option>
+          <option value="SALE" {% if selected_type == 'SALE' %}selected{% endif %}>Sale (Sell)</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Payment Statuses</option>
+          <option value="FULLY_PAID" {% if selected_status == 'FULLY_PAID' %}selected{% endif %}>Fully Paid</option>
+          <option value="PARTIALLY_PAID" {% if selected_status == 'PARTIALLY_PAID' %}selected{% endif %}>Partially Paid</option>
+          <option value="UNPAID" {% if selected_status == 'UNPAID' %}selected{% endif %}>Unpaid (Credit)</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-secondary w-100"><i class="bi bi-filter me-1"></i> Filter</button>
+      </div>
+      <div class="col-md-2">
+        {% if search or selected_type or selected_status %}
+        <a href="/transactions" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="app-card">
+  <div class="app-card-header">
+    <h5 class="app-card-title">Transactions ({{ total_count }})</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Tx Number</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Customer</th>
+          <th>MYR Qty</th>
+          <th>Rate (BDT)</th>
+          <th>Total BDT</th>
+          <th>Paid BDT</th>
+          <th>Outstanding</th>
+          <th>Payment Status</th>
+          <th>Tx Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+        <tr class="{% if tx.status == 'CANCELLED' %}table-danger text-muted opacity-75{% endif %}">
+          <td class="fw-bold">
+            <a href="/transactions/{{ tx.id }}" class="text-decoration-none text-dark">{{ tx.transaction_number }}</a>
+          </td>
+          <td>{{ tx.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            {% if tx.transaction_type == 'PURCHASE' %}
+            <span class="badge badge-status badge-purchase">Purchase</span>
+            {% else %}
+            <span class="badge badge-status badge-sale">Sale</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold">
+            <a href="/customers/{{ tx.customer.id }}" class="text-decoration-none text-dark">{{ tx.customer.full_name }}</a>
+          </td>
+          <td class="fw-semibold">{{ "{:,.2f}".format(tx.myr_quantity) }} MYR</td>
+          <td>৳{{ "{:,.2f}".format(tx.exchange_rate) }}</td>
+          <td class="fw-bold">৳{{ "{:,.2f}".format(tx.total_amount_bdt) }}</td>
+          <td class="text-success">৳{{ "{:,.2f}".format(tx.paid_amount_bdt) }}</td>
+          <td class="{% if tx.outstanding_amount_bdt > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+            ৳{{ "{:,.2f}".format(tx.outstanding_amount_bdt) }}
+          </td>
+          <td>
+            <span class="badge badge-status {% if tx.payment_status == 'FULLY_PAID' %}badge-paid{% elif tx.payment_status == 'PARTIALLY_PAID' %}badge-partial{% else %}badge-unpaid{% endif %}">
+              {{ tx.payment_status }}
+            </span>
+          </td>
+          <td>
+            {% if tx.status == 'POSTED' %}
+            <span class="badge bg-success">POSTED</span>
+            {% else %}
+            <span class="badge bg-danger">CANCELLED</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="/transactions/{{ tx.id }}" class="btn btn-outline-primary" title="Details">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="/transactions/{{ tx.id }}/receipt" class="btn btn-outline-secondary" title="View / Print Receipt">
+                <i class="bi bi-printer"></i>
+              </a>
+              <a href="/transactions/{{ tx.id }}/receipt/pdf" class="btn btn-outline-danger" title="Download PDF" target="_blank">
+                <i class="bi bi-file-pdf"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="12" class="text-center text-muted py-4">No transactions found matching your criteria.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

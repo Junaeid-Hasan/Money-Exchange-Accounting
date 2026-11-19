@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Cash & Bank Management - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Cash & Bank Treasury Management</h3>
+    <p class="text-muted small mb-0">Multi-tender account monitoring, inter-account contra transfers, and daily physical drawer reconciliation</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
+      <i class="bi bi-arrow-left-right me-1"></i> Transfer Funds (Contra)
+    </button>
+    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#reconcileModal">
+      <i class="bi bi-check2-all me-1"></i> Daily Cash Reconciliation
+    </button>
+  </div>
+</div>
+
+<!-- Account Balance Cards -->
+<div class="row g-3 mb-4">
+  {% for ca in cash_accounts %}
+  <div class="col-md-4">
+    <div class="metric-card border-start border-4 {% if ca.account_type == 'CASH' %}border-success{% elif ca.account_type == 'BANK' %}border-primary{% else %}border-info{% endif %}">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="badge bg-light text-dark border">{{ ca.account_type }}</span>
+        <span class="badge bg-secondary">{{ ca.account_code }}</span>
+      </div>
+      <div class="metric-title">{{ ca.account_name }}</div>
+      <div class="metric-value {% if ca.current_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+        ৳{{ "{:,.2f}".format(ca.current_balance) }}
+      </div>
+      <div class="metric-subtext">Linked GL: {{ ca.gl_account.account_code }} ({{ ca.gl_account.account_name }})</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Total Liquidity Banner -->
+<div class="p-3 mb-4 bg-white rounded border d-flex justify-content-between align-items-center shadow-sm">
+  <div class="d-flex align-items-center gap-3">
+    <div class="p-2 rounded bg-success bg-opacity-10 text-success fs-3">
+      <i class="bi bi-wallet2"></i>
+    </div>
+    <div>
+      <div class="text-muted small text-uppercase fw-bold">Total Liquid Cash Reserves</div>
+      <h4 class="fw-bold text-dark mb-0">৳{{ "{:,.2f}".format(total_cash) }}</h4>
+    </div>
+  </div>
+  <div class="text-muted small text-end">
+    <div><b>Opening Balance + Inflows - Outflows = Current Balance</b></div>
+    <div>Strict Accrual Separation: Collecting debt increases cash, not profit.</div>
+  </div>
+</div>
+
+<!-- Recent Cash Movements -->
+<div class="app-card">
+  <div class="app-card-header">
+    <h5 class="app-card-title"><i class="bi bi-clock-history me-2"></i>Recent Cash & Bank Movements</h5>
+    <span class="badge bg-light text-secondary border">Recent 50 Activities</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th>Reference Type</th>
+          <th>Activity Notes</th>
+          <th class="text-end">Amount (BDT)</th>
+          <th class="text-end">Resulting Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in recent_movements %}
+        <tr>
+          <td>{{ m.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="fw-semibold">{{ m.cash_account.account_name }}</td>
+          <td>
+            {% if m.movement_type == 'INFLOW' %}
+            <span class="badge badge-status badge-paid"><i class="bi bi-arrow-down-left"></i> INFLOW</span>
+            {% else %}
+            <span class="badge badge-status badge-unpaid"><i class="bi bi-arrow-up-right"></i> OUTFLOW</span>
+            {% endif %}
+          </td>
+          <td><span class="badge bg-light text-dark border">{{ m.reference_type }}</span></td>
+          <td>{{ m.notes or '-' }}</td>
+          <td class="text-end fw-bold {% if m.movement_type == 'INFLOW' %}text-success{% else %}text-danger{% endif %}">
+            {% if m.movement_type == 'INFLOW' %}+{% else %}-{% endif %}৳{{ "{:,.2f}".format(m.amount) }}
+          </td>
+          <td class="text-end fw-semibold text-dark">৳{{ "{:,.2f}".format(m.balance_after) }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">No cash movements recorded yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Fund Transfer Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/cash-bank/transfer" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Inter-Account Transfer (Contra Entry)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Source Account (Outflow) <span class="text-danger">*</span></label>
+            <select name="from_account_id" class="form-select" required>
+              {% for ca in cash_accounts %}
+              <option value="{{ ca.id }}">{{ ca.account_name }} (Current: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Destination Account (Inflow) <span class="text-danger">*</span></label>
+            <select name="to_account_id" class="form-select" required>
+              {% for ca in cash_accounts %}
+              <option value="{{ ca.id }}">{{ ca.account_name }} (Current: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Transfer Amount (BDT) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input type="number" step="0.01" min="0.01" name="amount" class="form-control fw-bold" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Transfer Date <span class="text-danger">*</span></label>
+            <input type="date" name="transfer_date" value="{{ today_str }}" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Notes / Cheque #</label>
+            <input type="text" name="notes" class="form-control" placeholder="e.g. Physical cash deposit to BRAC Bank">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i> Execute Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Reconciliation Modal -->
+<div class="modal fade" id="reconcileModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/cash-bank/reconcile" method="POST">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-check2-all me-2"></i>Daily Cash Drawer Reconciliation</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Cash Account to Reconcile <span class="text-danger">*</span></label>
+            <select name="cash_account_id" class="form-select" required>
+              {% for ca in cash_accounts %}
+              <option value="{{ ca.id }}">{{ ca.account_name }} (System Balance: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Reconciliation Date <span class="text-danger">*</span></label>
+            <input type="date" name="reconciliation_date" value="{{ today_str }}" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Physical Counted Cash (BDT) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input type="number" step="0.01" min="0" name="physical_balance" class="form-control fw-bold fs-5" placeholder="0.00" required>
+            </div>
+            <div class="form-text small">Enter actual counted notes in the physical drawer.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Discrepancy Notes / Explanation</label>
+            <input type="text" name="notes" class="form-control" placeholder="e.g. End of day counter count verified by teller">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm fw-bold">Save Reconciliation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

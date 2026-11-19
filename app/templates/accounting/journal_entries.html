@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Journal Entries - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Double-Entry Journal Entries</h3>
+    <p class="text-muted small mb-0">Immutable transaction journal vouchers maintaining total debit and credit equality</p>
+  </div>
+</div>
+
+<div class="app-card">
+  <div class="app-card-header">
+    <h5 class="app-card-title">Posted Journal Vouchers</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Entry #</th>
+          <th>Date</th>
+          <th>Reference Type</th>
+          <th>Memo / Description</th>
+          <th>Debit / Credit Lines Breakdown</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for je in entries %}
+        <tr class="{% if je.is_reversed %}table-danger text-muted opacity-75{% endif %}">
+          <td class="fw-bold">{{ je.entry_number }}</td>
+          <td>{{ je.entry_date.strftime('%Y-%m-%d') }}</td>
+          <td><span class="badge bg-light text-dark border">{{ je.reference_type }}</span></td>
+          <td>{{ je.description }}</td>
+          <td>
+            <div class="p-2 bg-light rounded border small">
+              <table class="table table-sm table-borderless mb-0">
+                {% for line in je.lines %}
+                <tr>
+                  <td class="py-0"><b>{{ line.account.account_code }}</b> - {{ line.account.account_name }}:</td>
+                  <td class="py-0 text-end {% if line.debit_amount > 0 %}text-primary fw-semibold{% endif %}">
+                    {% if line.debit_amount > 0 %}DR: ৳{{ "{:,.2f}".format(line.debit_amount) }}{% endif %}
+                  </td>
+                  <td class="py-0 text-end {% if line.credit_amount > 0 %}text-success fw-semibold{% endif %}">
+                    {% if line.credit_amount > 0 %}CR: ৳{{ "{:,.2f}".format(line.credit_amount) }}{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </td>
+          <td>
+            {% if je.is_reversed %}
+            <span class="badge bg-danger">REVERSED</span>
+            {% else %}
+            <span class="badge bg-success">POSTED</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">No journal entries recorded.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

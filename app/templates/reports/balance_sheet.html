@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Balance Sheet - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="/reports" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h3 class="fw-bold mb-0">Balance Sheet</h3>
+      <span class="badge bg-light text-secondary border">Statement of Financial Position</span>
+    </div>
+    <p class="text-muted small mb-0 mt-1">As of {{ balance_sheet.as_of_date.strftime('%d %B %Y') }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/reports/balance-sheet/pdf?as_of_date={{ balance_sheet.as_of_date }}" class="btn btn-outline-danger btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
+  </div>
+</div>
+
+<!-- As of Date Filter -->
+<div class="app-card mb-4">
+  <div class="app-card-body py-3">
+    <form method="GET" action="/reports/balance-sheet" class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="col-form-label col-form-label-sm fw-bold">As of Date:</label>
+      </div>
+      <div class="col-auto">
+        <input type="date" name="as_of_date" value="{{ balance_sheet.as_of_date }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">Generate</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Verification Status -->
+<div class="alert {% if balance_sheet.is_balanced %}alert-success{% else %}alert-danger{% endif %} mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <i class="bi {% if balance_sheet.is_balanced %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2 fs-5"></i>
+    {% if balance_sheet.is_balanced %}
+    <strong>BALANCED STATEMENT:</strong> Total Assets (৳{{ "{:,.2f}".format(balance_sheet.total_assets) }}) = Total Liabilities & Equity (৳{{ "{:,.2f}".format(balance_sheet.total_liabilities_and_equity) }}).
+    {% else %}
+    <strong>UNBALANCED WARNING:</strong> Variance of ৳{{ "{:,.2f}".format(balance_sheet.difference) }}.
+    {% endif %}
+  </div>
+  <span class="badge bg-white text-dark border">Double-Entry Validated</span>
+</div>
+
+<div class="row g-4">
+  <!-- Assets Section -->
+  <div class="col-lg-6">
+    <div class="app-card h-100">
+      <div class="app-card-header bg-primary bg-opacity-10">
+        <h5 class="app-card-title text-primary"><i class="bi bi-wallet2 me-2"></i>ASSETS</h5>
+        <span class="badge bg-primary">Debit Normal</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Account Name</th>
+              <th class="text-end">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in balance_sheet.assets %}
+            <tr>
+              <td><span class="badge bg-dark font-monospace">{{ a.code }}</span></td>
+              <td class="fw-semibold">{{ a.name }}</td>
+              <td class="text-end fw-semibold">৳{{ "{:,.2f}".format(a.amount) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-3">No asset balances.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-primary fw-bold fs-6">
+            <tr>
+              <td colspan="2">TOTAL ASSETS</td>
+              <td class="text-end">৳{{ "{:,.2f}".format(balance_sheet.total_assets) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liabilities & Equity Section -->
+  <div class="col-lg-6">
+    <div class="app-card mb-4">
+      <div class="app-card-header bg-danger bg-opacity-10">
+        <h5 class="app-card-title text-danger"><i class="bi bi-clock-history me-2"></i>LIABILITIES</h5>
+        <span class="badge bg-danger">Credit Normal</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Account Name</th>
+              <th class="text-end">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in balance_sheet.liabilities %}
+            <tr>
+              <td><span class="badge bg-dark font-monospace">{{ l.code }}</span></td>
+              <td class="fw-semibold">{{ l.name }}</td>
+              <td class="text-end fw-semibold">৳{{ "{:,.2f}".format(l.amount) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-3">No liability balances.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-danger fw-bold">
+            <tr>
+              <td colspan="2">TOTAL LIABILITIES</td>
+              <td class="text-end">৳{{ "{:,.2f}".format(balance_sheet.total_liabilities) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Equity Section -->
+    <div class="app-card">
+      <div class="app-card-header bg-dark bg-opacity-10">
+        <h5 class="app-card-title text-dark"><i class="bi bi-pie-chart me-2"></i>EQUITY</h5>
+        <span class="badge bg-dark">Credit Normal</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Account Name</th>
+              <th class="text-end">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in balance_sheet.equity %}
+            <tr>
+              <td><span class="badge bg-dark font-monospace">{{ e.code }}</span></td>
+              <td class="fw-semibold">{{ e.name }}</td>
+              <td class="text-end fw-semibold">৳{{ "{:,.2f}".format(e.amount) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-3">No equity balances.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-dark fw-bold">
+            <tr>
+              <td colspan="2">TOTAL EQUITY</td>
+              <td class="text-end">৳{{ "{:,.2f}".format(balance_sheet.total_equity) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Grand Total Liabilities & Equity -->
+    <div class="p-3 mt-3 bg-secondary bg-opacity-10 rounded border d-flex justify-content-between align-items-center">
+      <div class="fw-bold fs-6">TOTAL LIABILITIES & EQUITY:</div>
+      <div class="fw-bold fs-5 text-dark">৳{{ "{:,.2f}".format(balance_sheet.total_liabilities_and_equity) }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

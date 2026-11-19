@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Profit & Loss Statement - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="/reports" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h3 class="fw-bold mb-0">Profit & Loss Statement</h3>
+      <span class="badge bg-light text-secondary border">Income Statement</span>
+    </div>
+    <p class="text-muted small mb-0 mt-1">Period: {{ pnl.from_date or 'Inception' }} to {{ pnl.to_date }}</p>
+  </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="app-card mb-4">
+  <div class="app-card-body py-3">
+    <form method="GET" action="/reports/profit-loss" class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="col-form-label col-form-label-sm fw-bold">From:</label>
+      </div>
+      <div class="col-auto">
+        <input type="date" name="from_date" value="{{ pnl.from_date or '' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <label class="col-form-label col-form-label-sm fw-bold">To:</label>
+      </div>
+      <div class="col-auto">
+        <input type="date" name="to_date" value="{{ pnl.to_date }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- P&L Table -->
+<div class="app-card">
+  <div class="table-responsive">
+    <table class="table app-table mb-0">
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Description</th>
+          <th class="text-end">Amount (BDT)</th>
+          <th class="text-end">Summary (BDT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- REVENUE -->
+        <tr class="table-light"><td colspan="4" class="fw-bold text-uppercase text-primary">I. TRADING REVENUE</td></tr>
+        {% for inc in pnl.income_items %}
+        <tr>
+          <td><span class="badge bg-dark font-monospace">{{ inc.code }}</span></td>
+          <td class="fw-semibold">{{ inc.name }}</td>
+          <td class="text-end">৳{{ "{:,.2f}".format(inc.amount) }}</td>
+          <td></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-2">No sales revenue recognized in this period.</td></tr>
+        {% endfor %}
+        <tr class="fw-bold">
+          <td colspan="3">Total Trading Revenue</td>
+          <td class="text-end text-primary fs-6">৳{{ "{:,.2f}".format(pnl.total_revenue) }}</td>
+        </tr>
+
+        <!-- COGS -->
+        <tr class="table-light"><td colspan="4" class="fw-bold text-uppercase text-danger">II. COST OF GOODS SOLD (COGS)</td></tr>
+        {% for cogs in pnl.cogs_items %}
+        <tr>
+          <td><span class="badge bg-dark font-monospace">{{ cogs.code }}</span></td>
+          <td class="fw-semibold">{{ cogs.name }} (Moving WAC)</td>
+          <td class="text-end">৳{{ "{:,.2f}".format(cogs.amount) }}</td>
+          <td></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-2">No COGS recorded in this period.</td></tr>
+        {% endfor %}
+        <tr class="fw-bold">
+          <td colspan="3">Total Cost of Goods Sold</td>
+          <td class="text-end text-danger fs-6">(৳{{ "{:,.2f}".format(pnl.total_cogs) }})</td>
+        </tr>
+
+        <!-- GROSS PROFIT -->
+        <tr class="table-primary fw-bold fs-6">
+          <td colspan="3">GROSS PROFIT (Trading Revenue - COGS)</td>
+          <td class="text-end text-success">৳{{ "{:,.2f}".format(pnl.gross_profit) }}</td>
+        </tr>
+
+        <!-- OPERATING EXPENSES -->
+        <tr class="table-light"><td colspan="4" class="fw-bold text-uppercase text-secondary">III. OPERATING EXPENSES</td></tr>
+        {% for exp in pnl.expense_items %}
+        <tr>
+          <td><span class="badge bg-dark font-monospace">{{ exp.code }}</span></td>
+          <td class="fw-semibold">{{ exp.name }}</td>
+          <td class="text-end">৳{{ "{:,.2f}".format(exp.amount) }}</td>
+          <td></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-2">No operating expenses recorded in this period.</td></tr>
+        {% endfor %}
+        <tr class="fw-bold">
+          <td colspan="3">Total Operating Expenses</td>
+          <td class="text-end text-danger fs-6">(৳{{ "{:,.2f}".format(pnl.total_operating_expenses) }})</td>
+        </tr>
+
+        <!-- NET PROFIT -->
+        <tr class="table-dark fw-bold fs-5">
+          <td colspan="3">NET OPERATING PROFIT / (LOSS)</td>
+          <td class="text-end {% if pnl.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+            ৳{{ "{:,.2f}".format(pnl.net_profit) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

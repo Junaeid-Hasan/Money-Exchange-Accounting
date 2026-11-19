@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: money_exchange_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: money_exchange_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      TZ: Asia/Dhaka
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: money_exchange_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: "Foreign Currency Exchange & Accounting System"
+      ENVIRONMENT: "production"
+      DEBUG: "False"
+      SECRET_KEY: "change-this-in-production-use-a-strong-secret-key-32-chars-min"
+      DATABASE_URL: "postgresql://postgres:postgrespassword@db:5432/money_exchange_db"
+      BASE_CURRENCY: "BDT"
+      PRIMARY_FOREIGN_CURRENCY: "MYR"
+      TIMEZONE: "Asia/Dhaka"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+
+volumes:
+  postgres_data:

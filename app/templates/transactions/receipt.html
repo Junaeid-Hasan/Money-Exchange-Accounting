@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt {{ tx.transaction_number }} - Money Exchange{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printableReceipt, #printableReceipt * {
+      visibility: visible;
+    }
+    #printableReceipt {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      padding: 20px;
+    }
+  }
+  .receipt-box {
+    max-width: 650px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+  <div class="d-flex align-items-center gap-2">
+    <a href="/transactions/{{ tx.id }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Transaction</a>
+    <h4 class="fw-bold mb-0">Official Transaction Receipt</h4>
+  </div>
+  <div class="d-flex gap-2">
+    <button onclick="window.print()" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-printer me-1"></i> Print Receipt
+    </button>
+    <a href="/transactions/{{ tx.id }}/receipt/pdf" class="btn btn-outline-danger btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
+  </div>
+</div>
+
+<div class="receipt-box" id="printableReceipt">
+  <!-- Company Header -->
+  <div class="text-center pb-3 border-bottom mb-4">
+    <h4 class="fw-bold text-dark mb-1">{{ settings.company_name }}</h4>
+    <div class="text-muted small">{{ settings.address }}</div>
+    <div class="text-muted small">Phone: {{ settings.phone }} | Email: {{ settings.email }}</div>
+    {% if settings.trade_license_number %}
+    <div class="text-muted small">Trade License: {{ settings.trade_license_number }}</div>
+    {% endif %}
+    <div class="mt-3">
+      <span class="badge bg-dark px-3 py-2 fs-6">
+        {% if tx.transaction_type == 'PURCHASE' %}
+        CURRENCY PURCHASE RECEIPT (MYR BOUGHT)
+        {% else %}
+        CURRENCY SALES RECEIPT (MYR SOLD)
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Meta Table -->
+  <div class="row g-2 mb-4 small">
+    <div class="col-6">
+      <div><strong>Receipt Ref:</strong> {{ tx.transaction_number }}</div>
+      <div><strong>Date & Time:</strong> {{ tx.transaction_date.strftime('%Y-%m-%d %I:%M %p') }}</div>
+      <div><strong>Authorized Staff:</strong> {{ tx.created_by_user.full_name }}</div>
+    </div>
+    <div class="col-6 text-end">
+      <div><strong>Customer:</strong> {{ tx.customer.full_name }}</div>
+      <div><strong>Customer ID:</strong> {{ tx.customer.customer_code }}</div>
+      <div><strong>Phone:</strong> {{ tx.customer.phone_number }}</div>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <table class="table table-bordered mb-4">
+    <thead class="table-light">
+      <tr>
+        <th>Currency / Description</th>
+        <th class="text-center">Quantity</th>
+        <th class="text-center">Exchange Rate</th>
+        <th class="text-end">Total Amount (BDT)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="fw-semibold">Malaysian Ringgit (MYR)</td>
+        <td class="text-center fw-bold">{{ "{:,.2f}".format(tx.myr_quantity) }} MYR</td>
+        <td class="text-center">৳{{ "{:,.4f}".format(tx.exchange_rate) }}</td>
+        <td class="text-end fw-bold">৳{{ "{:,.2f}".format(tx.total_amount_bdt) }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Summary Breakdown -->
+  <div class="row justify-content-end mb-4">
+    <div class="col-7">
+      <table class="table table-sm table-borderless">
+        <tr>
+          <th class="text-end">Total Value:</th>
+          <td class="text-end fw-bold">৳{{ "{:,.2f}".format(tx.total_amount_bdt) }}</td>
+        </tr>
+        <tr>
+          <th class="text-end">Amount Paid / Received ({{ tx.payment_method or 'Cash' }}):</th>
+          <td class="text-end text-success fw-bold">৳{{ "{:,.2f}".format(tx.paid_amount_bdt) }}</td>
+        </tr>
+        <tr class="border-top">
+          <th class="text-end">Remaining Outstanding Due:</th>
+          <td class="text-end text-danger fw-bold fs-6">৳{{ "{:,.2f}".format(tx.outstanding_amount_bdt) }}</td>
+        </tr>
+        <tr>
+          <th class="text-end">Settlement Status:</th>
+          <td class="text-end">
+            <span class="badge badge-status {% if tx.payment_status == 'FULLY_PAID' %}badge-paid{% elif tx.payment_status == 'PARTIALLY_PAID' %}badge-partial{% else %}badge-unpaid{% endif %}">
+              {{ tx.payment_status }}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Notice & Signatures -->
+  <div class="border-top pt-3 text-center mb-5">
+    <p class="text-muted small mb-0">{{ settings.receipt_footer_note }}</p>
+  </div>
+
+  <div class="row text-center pt-4">
+    <div class="col-6">
+      <div class="border-top border-dark mx-4 pt-1 small fw-semibold">Customer Signature</div>
+    </div>
+    <div class="col-6">
+      <div class="border-top border-dark mx-4 pt-1 small fw-semibold">Authorized Officer Signature</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

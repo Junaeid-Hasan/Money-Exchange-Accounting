@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Chart of Accounts - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Chart of Accounts (General Ledger)</h3>
+    <p class="text-muted small mb-0">Structured financial accounts framework adhering to standard double-entry bookkeeping</p>
+  </div>
+</div>
+
+<div class="app-card">
+  <div class="app-card-header">
+    <h5 class="app-card-title">General Ledger Accounts ({{ accounts | length }})</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th>Category Type</th>
+          <th>Normal Balance</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in accounts %}
+        <tr>
+          <td><span class="badge bg-dark font-monospace fs-6">{{ a.account_code }}</span></td>
+          <td class="fw-semibold">{{ a.account_name }}</td>
+          <td>
+            {% if a.account_type == 'ASSET' %}
+            <span class="badge bg-primary">ASSET</span>
+            {% elif a.account_type == 'LIABILITY' %}
+            <span class="badge bg-danger">LIABILITY</span>
+            {% elif a.account_type == 'EQUITY' %}
+            <span class="badge bg-dark">EQUITY</span>
+            {% elif a.account_type == 'INCOME' %}
+            <span class="badge bg-success">INCOME</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">EXPENSE</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge bg-light text-secondary border">{{ a.normal_balance }}</span>
+          </td>
+          <td>
+            <span class="badge bg-success">ACTIVE</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

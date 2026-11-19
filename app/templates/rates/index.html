@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Exchange Rates - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Company Exchange Rate Management</h3>
+    <p class="text-muted small mb-0">Independently control company purchase and selling rates for Malaysian Ringgit (MYR)</p>
+  </div>
+</div>
+
+<!-- Active Rates Overview -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="metric-card border-start border-4 border-info">
+      <div class="metric-title">Active Purchase Rate (We Buy MYR)</div>
+      <div class="metric-value text-info">
+        ৳{{ "{:,.4f}".format(current_rate.default_purchase_rate) if current_rate else "0.0000" }}
+      </div>
+      <div class="metric-subtext">Amount paid in BDT per 1 MYR to customer</div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="metric-card border-start border-4 border-success">
+      <div class="metric-title">Active Selling Rate (We Sell MYR)</div>
+      <div class="metric-value text-success">
+        ৳{{ "{:,.4f}".format(current_rate.default_selling_rate) if current_rate else "0.0000" }}
+      </div>
+      <div class="metric-subtext">Amount received in BDT per 1 MYR from customer</div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="metric-card border-start border-4 border-primary">
+      <div class="metric-title">Trading Gross Spread</div>
+      <div class="metric-value text-primary">
+        {% if current_rate %}
+        ৳{{ "{:,.4f}".format(current_rate.default_selling_rate - current_rate.default_purchase_rate) }}
+        {% else %}
+        ৳0.0000
+        {% endif %}
+      </div>
+      <div class="metric-subtext">Company spread margin per Ringgit</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Update Rates Form (Admin Only) -->
+  <div class="col-lg-4">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-pencil-square text-primary me-2"></i>Update Default Rates</h5>
+      </div>
+      <div class="app-card-body">
+        {% if current_user.role_code == 'ADMIN' %}
+        <form action="/rates/update" method="POST">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Default Purchase Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input type="number" step="0.0001" name="purchase_rate" value="{{ current_rate.default_purchase_rate if current_rate else '300.0000' }}" class="form-control fw-bold" required>
+            </div>
+            <div class="form-text small">e.g. ৳300.00 per 1 MYR</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Default Selling Rate (BDT per 1 MYR) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input type="number" step="0.0001" name="selling_rate" value="{{ current_rate.default_selling_rate if current_rate else '310.0000' }}" class="form-control fw-bold" required>
+            </div>
+            <div class="form-text small">e.g. ৳310.00 per 1 MYR</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2">
+            <i class="bi bi-check-circle me-1"></i> Save New Default Rates
+          </button>
+        </form>
+        {% else %}
+        <div class="alert alert-warning small mb-0">
+          <i class="bi bi-shield-lock me-1"></i> Only administrators are permitted to update default company rates.
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info small mt-3 mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>Integrity Rule:</strong> Updating default rates will apply only to new transactions. Historical transactions permanently freeze and preserve their original rates.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historical Rates Table -->
+  <div class="col-lg-8">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-clock-history text-secondary me-2"></i>Rate Change History</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table">
+          <thead>
+            <tr>
+              <th>Currency</th>
+              <th>Purchase Rate</th>
+              <th>Selling Rate</th>
+              <th>Spread</th>
+              <th>Effective From</th>
+              <th>Effective To</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rate_history %}
+            <tr class="{% if r.is_active %}table-primary bg-opacity-25{% endif %}">
+              <td class="fw-bold">{{ r.currency_code }}</td>
+              <td class="fw-semibold text-info">৳{{ "{:,.4f}".format(r.default_purchase_rate) }}</td>
+              <td class="fw-semibold text-success">৳{{ "{:,.4f}".format(r.default_selling_rate) }}</td>
+              <td>৳{{ "{:,.4f}".format(r.default_selling_rate - r.default_purchase_rate) }}</td>
+              <td>{{ r.effective_from.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ r.effective_to.strftime('%Y-%m-%d %H:%M') if r.effective_to else 'Current' }}</td>
+              <td>
+                {% if r.is_active %}
+                <span class="badge bg-success">ACTIVE</span>
+                {% else %}
+                <span class="badge bg-secondary">HISTORICAL</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-3">No rate history recorded.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

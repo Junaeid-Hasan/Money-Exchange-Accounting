@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction {{ tx.transaction_number }} - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="/transactions" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h3 class="fw-bold mb-0">{{ tx.transaction_number }}</h3>
+      {% if tx.transaction_type == 'PURCHASE' %}
+      <span class="badge badge-status badge-purchase fs-6">Purchase (Buy MYR)</span>
+      {% else %}
+      <span class="badge badge-status badge-sale fs-6">Sale (Sell MYR)</span>
+      {% endif %}
+      {% if tx.status == 'CANCELLED' %}
+      <span class="badge bg-danger fs-6">CANCELLED / VOIDED</span>
+      {% endif %}
+    </div>
+    <p class="text-muted small mb-0 mt-1">Recorded on {{ tx.transaction_date.strftime('%d %B %Y at %I:%M %p') }} by {{ tx.created_by_user.full_name }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/transactions/{{ tx.id }}/receipt" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-printer me-1"></i> Print Receipt
+    </a>
+    <a href="/transactions/{{ tx.id }}/receipt/pdf" class="btn btn-outline-danger btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
+    {% if tx.outstanding_amount_bdt > 0 and tx.status == 'POSTED' %}
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
+      <i class="bi bi-cash-coin me-1"></i> Record Installment Payment
+    </button>
+    {% endif %}
+    {% if current_user.role_code == 'ADMIN' and tx.status == 'POSTED' %}
+    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#voidTxModal">
+      <i class="bi bi-x-circle me-1"></i> Cancel / Void
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Transaction Overview Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="metric-card">
+      <div class="metric-title">MYR Currency Quantity</div>
+      <div class="metric-value text-primary">{{ "{:,.2f}".format(tx.myr_quantity) }} <span class="fs-6">MYR</span></div>
+      <div class="metric-subtext">Applied Rate: ৳{{ "{:,.4f}".format(tx.exchange_rate) }}</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card">
+      <div class="metric-title">Total Transaction Value</div>
+      <div class="metric-value text-dark">৳{{ "{:,.2f}".format(tx.total_amount_bdt) }}</div>
+      <div class="metric-subtext">{{ "{:,.2f}".format(tx.myr_quantity) }} × ৳{{ "{:,.2f}".format(tx.exchange_rate) }}</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card">
+      <div class="metric-title">Total Paid / Received</div>
+      <div class="metric-value text-success">৳{{ "{:,.2f}".format(tx.paid_amount_bdt) }}</div>
+      <div class="metric-subtext">Settlement Status: <span class="fw-bold">{{ tx.payment_status }}</span></div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card border-start border-4 {% if tx.outstanding_amount_bdt > 0 %}border-danger{% else %}border-success{% endif %}">
+      <div class="metric-title">Remaining Balance (Due)</div>
+      <div class="metric-value {% if tx.outstanding_amount_bdt > 0 %}text-danger{% else %}text-success{% endif %}">
+        ৳{{ "{:,.2f}".format(tx.outstanding_amount_bdt) }}
+      </div>
+      <div class="metric-subtext">{% if tx.transaction_type == 'PURCHASE' %}Company Payable{% else %}Customer Receivable{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Customer Details -->
+  <div class="col-md-6">
+    <div class="app-card h-100">
+      <div class="app-card-header">
+        <h6 class="app-card-title"><i class="bi bi-person me-2 text-primary"></i>Customer Information</h6>
+        <a href="/customers/{{ tx.customer.id }}" class="small text-decoration-none">View Profile</a>
+      </div>
+      <div class="app-card-body small">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th class="text-muted w-35">Customer Name:</th><td class="fw-bold">{{ tx.customer.full_name }}</td></tr>
+          <tr><th class="text-muted">Customer Code:</th><td>{{ tx.customer.customer_code }}</td></tr>
+          <tr><th class="text-muted">Phone Number:</th><td>{{ tx.customer.phone_number }}</td></tr>
+          <tr><th class="text-muted">Current Receivables:</th><td class="text-warning fw-semibold">৳{{ "{:,.2f}".format(tx.customer.total_receivable_bdt) }}</td></tr>
+          <tr><th class="text-muted">Current Payables:</th><td class="text-danger fw-semibold">৳{{ "{:,.2f}".format(tx.customer.total_payable_bdt) }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operational & Accounting Meta -->
+  <div class="col-md-6">
+    <div class="app-card h-100">
+      <div class="app-card-header">
+        <h6 class="app-card-title"><i class="bi bi-calculator me-2 text-info"></i>Inventory & Accounting Effects</h6>
+      </div>
+      <div class="app-card-body small">
+        <table class="table table-sm table-borderless mb-0">
+          {% if tx.transaction_type == 'SALE' %}
+          <tr><th class="text-muted w-35">Cost of Goods Sold:</th><td class="fw-bold text-dark">৳{{ "{:,.2f}".format(tx.cogs_bdt) }}</td></tr>
+          <tr><th class="text-muted">Gross Profit Realized:</th><td class="fw-bold text-success">৳{{ "{:,.2f}".format(tx.total_amount_bdt - tx.cogs_bdt) }}</td></tr>
+          {% else %}
+          <tr><th class="text-muted w-35">Inventory Inflow:</th><td class="fw-bold text-info">+{{ "{:,.2f}".format(tx.myr_quantity) }} MYR</td></tr>
+          <tr><th class="text-muted">Acquisition Cost:</th><td>৳{{ "{:,.4f}".format(tx.exchange_rate) }} / MYR</td></tr>
+          {% endif %}
+          <tr><th class="text-muted">Reference Notes:</th><td>{{ tx.notes or 'None' }}</td></tr>
+          <tr><th class="text-muted">Created By:</th><td>{{ tx.created_by_user.full_name }} ({{ tx.created_by_user.role_code }})</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Installment Payment History -->
+<div class="app-card mb-4">
+  <div class="app-card-header">
+    <h5 class="app-card-title"><i class="bi bi-clock-history me-2"></i>Installment Payments Linked to this Transaction</h5>
+    <span class="badge bg-light text-dark border">{{ tx.payments | length }} Settlements</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Payment #</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Payment Method</th>
+          <th>Account</th>
+          <th>Amount (BDT)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in tx.payments %}
+        <tr>
+          <td class="fw-bold">{{ p.payment_number }}</td>
+          <td>{{ p.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            {% if p.payment_type == 'INCOMING' %}
+            <span class="badge badge-status badge-paid">INCOMING (Received)</span>
+            {% else %}
+            <span class="badge badge-status badge-unpaid">OUTGOING (Disbursed)</span>
+            {% endif %}
+          </td>
+          <td>{{ p.payment_method }}</td>
+          <td>{{ p.cash_account.account_name }}</td>
+          <td class="fw-bold text-success">৳{{ "{:,.2f}".format(p.amount_bdt) }}</td>
+          <td>{{ p.reference_note or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-3">No payments recorded.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Record Installment Payment Modal -->
+{% if tx.outstanding_amount_bdt > 0 and tx.status == 'POSTED' %}
+<div class="modal fade" id="recordPaymentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/payments/record" method="POST">
+        <input type="hidden" name="transaction_id" value="{{ tx.id }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">
+            {% if tx.transaction_type == 'SALE' %}
+            <i class="bi bi-arrow-down-left-circle text-success me-2"></i>Record Incoming Payment from Customer
+            {% else %}
+            <i class="bi bi-arrow-up-right-circle text-danger me-2"></i>Record Outgoing Payment to Customer
+            {% endif %}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-light border small mb-3">
+            <b>Transaction:</b> {{ tx.transaction_number }}<br>
+            <b>Customer:</b> {{ tx.customer.full_name }}<br>
+            <b>Total Value:</b> ৳{{ "{:,.2f}".format(tx.total_amount_bdt) }}<br>
+            <b>Current Outstanding:</b> <span class="text-danger fw-bold">৳{{ "{:,.2f}".format(tx.outstanding_amount_bdt) }}</span>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Payment Amount (BDT) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input type="number" step="0.01" min="0.01" max="{{ tx.outstanding_amount_bdt }}" name="amount" value="{{ tx.outstanding_amount_bdt }}" class="form-control fw-bold fs-5" required>
+            </div>
+            <div class="form-text small">Cannot exceed outstanding balance: ৳{{ "{:,.2f}".format(tx.outstanding_amount_bdt) }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Cash / Bank Account</label>
+            <select name="cash_account_id" class="form-select">
+              {% for ca in cash_accounts %}
+              <option value="{{ ca.id }}">{{ ca.account_name }} (Bal: ৳{{ "{:,.2f}".format(ca.current_balance) }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Payment Method</label>
+            <select name="payment_method" class="form-select">
+              <option value="CASH">Cash in Hand</option>
+              <option value="BANK_TRANSFER">Bank Transfer / Cheque</option>
+              <option value="MFS">Mobile Financial Services (bKash/Nagad)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Reference Notes</label>
+            <input type="text" name="notes" class="form-control" placeholder="Installment payment reference note...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i> Post Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Void Transaction Modal -->
+{% if current_user.role_code == 'ADMIN' and tx.status == 'POSTED' %}
+<div class="modal fade" id="voidTxModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/transactions/{{ tx.id }}/cancel" method="POST">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Cancel & Reverse Transaction</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-danger small fw-semibold">
+            Warning: Cancelling a posted transaction will generate double-entry counter-reversal journal entries, adjust inventory balances, reverse cash disbursements/receipts, and adjust customer accounts.
+          </p>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Cancellation Reason <span class="text-danger">*</span></label>
+            <textarea name="reason" class="form-control" rows="3" placeholder="Enter reason for transaction cancellation..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger btn-sm fw-bold">Confirm Transaction Cancellation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

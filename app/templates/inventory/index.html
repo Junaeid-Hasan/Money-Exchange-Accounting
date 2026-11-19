@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Currency Inventory (MYR) - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Malaysian Ringgit (MYR) Inventory</h3>
+    <p class="text-muted small mb-0">Perpetual Moving Weighted Average Cost (WAC) tracking and valuation engine</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/transactions/purchase" class="btn btn-info text-white btn-sm">
+      <i class="bi bi-plus-circle me-1"></i> Stock Inflow (Purchase)
+    </a>
+    <a href="/transactions/sales" class="btn btn-success btn-sm">
+      <i class="bi bi-dash-circle me-1"></i> Stock Outflow (Sale)
+    </a>
+  </div>
+</div>
+
+<!-- Key Inventory Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="metric-card border-start border-4 border-primary">
+      <div class="metric-title">Available MYR Stock</div>
+      <div class="metric-value text-primary">{{ "{:,.2f}".format(inventory.total_quantity) }} <span class="fs-6">MYR</span></div>
+      <div class="metric-subtext">Physical currency in vault counter</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card border-start border-4 border-success">
+      <div class="metric-title">Weighted Average Cost (WAC)</div>
+      <div class="metric-value text-success">৳{{ "{:,.4f}".format(inventory.weighted_average_cost) }}</div>
+      <div class="metric-subtext">BDT Cost per 1 MYR unit</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card border-start border-4 border-info">
+      <div class="metric-title">Total Inventory Valuation</div>
+      <div class="metric-value text-info">৳{{ "{:,.2f}".format(inventory.total_valuation_bdt) }}</div>
+      <div class="metric-subtext">Total Quantity × Moving WAC</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="metric-card border-start border-4 border-dark">
+      <div class="metric-title">Lifetime Trading Turnover</div>
+      <div class="metric-value text-dark fs-4">
+        {{ "{:,.0f}".format(summary.total_purchased_qty) }} <span class="fs-6 text-muted">/ {{ "{:,.0f}".format(summary.total_sold_qty) }}</span>
+      </div>
+      <div class="metric-subtext">MYR Inflows / MYR Outflows</div>
+    </div>
+  </div>
+</div>
+
+<!-- Inventory Movements History -->
+<div class="app-card">
+  <div class="app-card-header">
+    <h5 class="app-card-title"><i class="bi bi-clock-history me-2"></i>Perpetual Inventory Movement Ledger</h5>
+    <span class="badge bg-light text-secondary border">Recent 50 Movements</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Movement Type</th>
+          <th>Transaction Reference</th>
+          <th class="text-end">Quantity Delta</th>
+          <th class="text-end">Unit Cost (BDT)</th>
+          <th class="text-end">Total Valuation (BDT)</th>
+          <th class="text-end">Resulting Stock</th>
+          <th class="text-end">Resulting WAC</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in summary.recent_movements %}
+        <tr>
+          <td>{{ m.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            {% if m.movement_type == 'PURCHASE_INFLOW' %}
+            <span class="badge badge-status badge-purchase"><i class="bi bi-arrow-down-left"></i> Purchase Inflow</span>
+            {% elif m.movement_type == 'SALE_OUTFLOW' %}
+            <span class="badge badge-status badge-sale"><i class="bi bi-arrow-up-right"></i> Sale Outflow</span>
+            {% elif m.movement_type == 'REVERSAL_INFLOW' %}
+            <span class="badge badge-status badge-paid"><i class="bi bi-arrow-counterclockwise"></i> Reversal Return</span>
+            {% else %}
+            <span class="badge badge-status badge-unpaid"><i class="bi bi-arrow-counterclockwise"></i> Reversal Outflow</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if m.transaction %}
+            <a href="/transactions/{{ m.transaction.id }}" class="fw-semibold text-dark text-decoration-none">
+              {{ m.transaction.transaction_number }}
+            </a>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td class="text-end fw-bold {% if m.quantity_delta > 0 %}text-info{% else %}text-danger{% endif %}">
+            {% if m.quantity_delta > 0 %}+{% endif %}{{ "{:,.2f}".format(m.quantity_delta) }} MYR
+          </td>
+          <td class="text-end">৳{{ "{:,.4f}".format(m.unit_cost_bdt) }}</td>
+          <td class="text-end fw-semibold">৳{{ "{:,.2f}".format(m.total_cost_bdt) }}</td>
+          <td class="text-end fw-bold text-dark">{{ "{:,.2f}".format(m.resulting_balance_qty) }} MYR</td>
+          <td class="text-end fw-bold text-success">৳{{ "{:,.4f}".format(m.resulting_wac) }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-4">No inventory movements recorded yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

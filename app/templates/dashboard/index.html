@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Money Exchange & Accounting System{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Financial Operations Dashboard</h3>
+    <p class="text-muted small mb-0">Real-time overview of currency inventory, cash positions, and net profitability</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/transactions/purchase" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-down-left-circle me-1"></i> Buy MYR
+    </a>
+    <a href="/transactions/sales" class="btn btn-success btn-sm">
+      <i class="bi bi-arrow-up-right-circle me-1"></i> Sell MYR
+    </a>
+  </div>
+</div>
+
+<!-- 1. Key Performance Cards -->
+<div class="row g-3 mb-4">
+  <!-- Today Gross Profit -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card border-start border-4 border-success">
+      <div class="metric-title">Today's Gross Profit</div>
+      <div class="metric-value text-success">৳{{ "{:,.2f}".format(cards.today_gross_profit) }}</div>
+      <div class="metric-subtext">Sales Revenue minus Cost of MYR Sold</div>
+    </div>
+  </div>
+
+  <!-- Today Net Profit -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card border-start border-4 border-primary">
+      <div class="metric-title">Today's Net Profit</div>
+      <div class="metric-value {% if cards.today_net_profit >= 0 %}text-primary{% else %}text-danger{% endif %}">
+        ৳{{ "{:,.2f}".format(cards.today_net_profit) }}
+      </div>
+      <div class="metric-subtext">After deducting today's operating expenses</div>
+    </div>
+  </div>
+
+  <!-- Monthly Net Profit -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card border-start border-4 border-info">
+      <div class="metric-title">This Month's Net Profit</div>
+      <div class="metric-value text-info">৳{{ "{:,.2f}".format(cards.month_net_profit) }}</div>
+      <div class="metric-subtext">Gross: ৳{{ "{:,.2f}".format(cards.month_gross_profit) }}</div>
+    </div>
+  </div>
+
+  <!-- Yearly Net Profit -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card border-start border-4 border-dark">
+      <div class="metric-title">This Year's Net Profit</div>
+      <div class="metric-value text-dark">৳{{ "{:,.2f}".format(cards.year_net_profit) }}</div>
+      <div class="metric-subtext">Expenses: ৳{{ "{:,.2f}".format(cards.year_operating_expenses) }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Inventory & Cash Balance Cards -->
+<div class="row g-3 mb-4">
+  <!-- Current MYR Inventory -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card">
+      <div class="metric-title"><i class="bi bi-box-seam me-1 text-primary"></i> Available MYR Inventory</div>
+      <div class="metric-value text-primary">{{ "{:,.2f}".format(cards.current_myr_inventory) }} <span class="fs-6 text-muted">MYR</span></div>
+      <div class="metric-subtext">Valuation: ৳{{ "{:,.2f}".format(cards.current_myr_valuation) }} (WAC: ৳{{ "{:,.4f}".format(cards.current_myr_wac) }})</div>
+    </div>
+  </div>
+
+  <!-- Total BDT Cash Balance -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card">
+      <div class="metric-title"><i class="bi bi-cash-coin me-1 text-success"></i> Total BDT Cash & Bank</div>
+      <div class="metric-value text-success">৳{{ "{:,.2f}".format(cards.total_bdt_cash) }}</div>
+      <div class="metric-subtext">Vault + BRAC Bank + bKash Merchant</div>
+    </div>
+  </div>
+
+  <!-- Customer Receivables -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card">
+      <div class="metric-title"><i class="bi bi-person-exclamation me-1 text-warning"></i> Customer Receivables</div>
+      <div class="metric-value text-warning">৳{{ "{:,.2f}".format(cards.customer_receivables) }}</div>
+      <div class="metric-subtext">Customers owe company (Asset)</div>
+    </div>
+  </div>
+
+  <!-- Company Payables -->
+  <div class="col-xl-3 col-md-6">
+    <div class="metric-card">
+      <div class="metric-title"><i class="bi bi-clock-history me-1 text-danger"></i> Company Payables</div>
+      <div class="metric-value text-danger">৳{{ "{:,.2f}".format(cards.company_payables) }}</div>
+      <div class="metric-subtext">Company owes customers (Liability)</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Interactive Charts -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="app-card h-100">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-graph-up text-success me-2"></i>Daily Net Profit Trend (BDT)</h5>
+        <span class="badge bg-light text-secondary border">Past 14 Days</span>
+      </div>
+      <div class="app-card-body" style="height: 280px;">
+        <canvas id="dailyProfitChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="app-card h-100">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-pie-chart text-primary me-2"></i>Expense Breakdown</h5>
+        <span class="badge bg-light text-secondary border">Operating</span>
+      </div>
+      <div class="app-card-body" style="height: 280px;">
+        <canvas id="expenseChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-bar-chart-fill text-info me-2"></i>MYR Trading Volume (Purchases vs. Sales)</h5>
+        <span class="badge bg-light text-secondary border">Quantities in MYR</span>
+      </div>
+      <div class="app-card-body" style="height: 250px;">
+        <canvas id="volumeChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Recent Transactions & Unpaid Lists -->
+<div class="row g-3">
+  <!-- Recent Purchases -->
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-arrow-down-left text-info me-2"></i>Recent MYR Purchases</h5>
+        <a href="/transactions?type=PURCHASE" class="small text-decoration-none">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table">
+          <thead>
+            <tr>
+              <th>Tx #</th>
+              <th>Customer</th>
+              <th>Quantity</th>
+              <th>Rate</th>
+              <th>Total BDT</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_purchases %}
+            <tr>
+              <td><a href="/transactions/{{ p.id }}" class="fw-bold text-dark text-decoration-none">{{ p.transaction_number }}</a></td>
+              <td>{{ p.customer.full_name }}</td>
+              <td>{{ "{:,.2f}".format(p.myr_quantity) }} MYR</td>
+              <td>৳{{ "{:,.2f}".format(p.exchange_rate) }}</td>
+              <td class="fw-semibold">৳{{ "{:,.2f}".format(p.total_amount_bdt) }}</td>
+              <td>
+                <span class="badge badge-status {% if p.payment_status == 'FULLY_PAID' %}badge-paid{% elif p.payment_status == 'PARTIALLY_PAID' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                  {{ p.payment_status }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">No recent purchase transactions.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Sales -->
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header">
+        <h5 class="app-card-title"><i class="bi bi-arrow-up-right text-success me-2"></i>Recent MYR Sales</h5>
+        <a href="/transactions?type=SALE" class="small text-decoration-none">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table">
+          <thead>
+            <tr>
+              <th>Tx #</th>
+              <th>Customer</th>
+              <th>Quantity</th>
+              <th>Rate</th>
+              <th>Total BDT</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in recent_sales %}
+            <tr>
+              <td><a href="/transactions/{{ s.id }}" class="fw-bold text-dark text-decoration-none">{{ s.transaction_number }}</a></td>
+              <td>{{ s.customer.full_name }}</td>
+              <td>{{ "{:,.2f}".format(s.myr_quantity) }} MYR</td>
+              <td>৳{{ "{:,.2f}".format(s.exchange_rate) }}</td>
+              <td class="fw-semibold">৳{{ "{:,.2f}".format(s.total_amount_bdt) }}</td>
+              <td>
+                <span class="badge badge-status {% if s.payment_status == 'FULLY_PAID' %}badge-paid{% elif s.payment_status == 'PARTIALLY_PAID' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                  {{ s.payment_status }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">No recent sales transactions.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Outstanding Balances Section -->
+<div class="row g-3 mt-1">
+  <!-- Debtors (Customers who owe company) -->
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header bg-warning bg-opacity-10">
+        <h5 class="app-card-title text-warning-emphasis"><i class="bi bi-exclamation-triangle-fill me-2"></i>Top Customer Receivables (Debtors)</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Receivable (BDT)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in debtor_customers %}
+            <tr>
+              <td class="fw-semibold"><a href="/customers/{{ d.id }}">{{ d.full_name }}</a></td>
+              <td>{{ d.phone_number }}</td>
+              <td class="text-danger fw-bold">৳{{ "{:,.2f}".format(d.total_receivable_bdt) }}</td>
+              <td>
+                <a href="/customers/{{ d.id }}" class="btn btn-sm btn-outline-primary py-0">Profile</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-3">No outstanding customer receivables. All settled!</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Creditors (Company owes customers) -->
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header bg-danger bg-opacity-10">
+        <h5 class="app-card-title text-danger-emphasis"><i class="bi bi-clock-history me-2"></i>Top Company Payables (Creditors)</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table app-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Payable (BDT)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in creditor_customers %}
+            <tr>
+              <td class="fw-semibold"><a href="/customers/{{ c.id }}">{{ c.full_name }}</a></td>
+              <td>{{ c.phone_number }}</td>
+              <td class="text-danger fw-bold">৳{{ "{:,.2f}".format(c.total_payable_bdt) }}</td>
+              <td>
+                <a href="/customers/{{ c.id }}" class="btn btn-sm btn-outline-primary py-0">Profile</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-3">No outstanding company payables. All settled!</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard-charts.js"></script>
+{% endblock %}
